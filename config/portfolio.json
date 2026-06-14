@@ -1,0 +1,29 @@
+{
+  "name": "Diversified Multi-Asset Book",
+  "notional": 25000000,
+  "return_type": "log",
+  "missing_policy": "skip",
+  "annualization_factor": 252,
+  "covariance": "ledoit_wolf",
+  "ewma_lambda": 0.94,
+  "confidences": [0.95, 0.99],
+  "horizons": [1, 10],
+  "monte_carlo": { "draws": 100000, "seed": 42 },
+  "stress_scenarios": "config/stress_scenarios.json",
+  "factor_betas": "config/factor_betas.json",
+  "positions": [
+    { "asset": "SPY",  "weight": 0.15, "sector": "Equity" },
+    { "asset": "QQQ",  "weight": 0.10, "sector": "Equity" },
+    { "asset": "EFA",  "weight": 0.08, "sector": "Equity" },
+    { "asset": "AAPL", "weight": 0.05, "sector": "Equity" },
+    { "asset": "MSFT", "weight": 0.05, "sector": "Equity" },
+    { "asset": "JPM",  "weight": 0.04, "sector": "Equity" },
+    { "asset": "XOM",  "weight": 0.04, "sector": "Equity" },
+    { "asset": "TLT",  "weight": 0.12, "sector": "Rates" },
+    { "asset": "IEF",  "weight": 0.12, "sector": "Rates" },
+    { "asset": "LQD",  "weight": 0.08, "sector": "Credit" },
+    { "asset": "HYG",  "weight": 0.06, "sector": "Credit" },
+    { "asset": "GLD",  "weight": 0.08, "sector": "Commodity" },
+    { "asset": "USO",  "weight": 0.03, "sector": "Commodity" }
+  ]
+}

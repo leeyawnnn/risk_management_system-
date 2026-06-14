@@ -1,0 +1,55 @@
+{
+  "scenarios": [
+    {
+      "name": "2008 GFC",
+      "type": "historical",
+      "description": "Global Financial Crisis, Sep-Nov 2008. Equities and high-yield crater, banks worst hit, oil collapses; Treasuries and gold rally on flight-to-quality.",
+      "asset_shocks": {
+        "SPY": -0.30, "QQQ": -0.32, "EFA": -0.35, "AAPL": -0.33, "MSFT": -0.28,
+        "JPM": -0.45, "XOM": -0.25,
+        "TLT": 0.15, "IEF": 0.08, "LQD": -0.05, "HYG": -0.28,
+        "GLD": 0.05, "USO": -0.55
+      }
+    },
+    {
+      "name": "2020 COVID Crash",
+      "type": "historical",
+      "description": "COVID-19 selloff, Feb 19 - Mar 23 2020. Sharp broad equity drawdown, energy collapses, high-yield gaps wider; Treasuries up, gold sold early for liquidity.",
+      "asset_shocks": {
+        "SPY": -0.34, "QQQ": -0.28, "EFA": -0.33, "AAPL": -0.30, "MSFT": -0.28,
+        "JPM": -0.42, "XOM": -0.55,
+        "TLT": 0.12, "IEF": 0.06, "LQD": -0.08, "HYG": -0.20,
+        "GLD": -0.03, "USO": -0.65
+      }
+    },
+    {
+      "name": "1987 Black Monday",
+      "type": "historical",
+      "description": "Oct 19 1987 single-day crash. S&P 500 fell ~20.5% in one session; broad equity shock, modest bond rally.",
+      "asset_shocks": {
+        "SPY": -0.205, "QQQ": -0.21, "EFA": -0.18, "AAPL": -0.22, "MSFT": -0.20,
+        "JPM": -0.23, "XOM": -0.18,
+        "TLT": 0.05, "IEF": 0.03, "LQD": 0.01, "HYG": -0.08,
+        "GLD": 0.02, "USO": -0.10
+      }
+    },
+    {
+      "name": "Equity -20%",
+      "type": "synthetic",
+      "description": "Broad equity index down 20%. Applied via the equity factor beta of each asset.",
+      "factor_shocks": { "equity": -0.20 }
+    },
+    {
+      "name": "Credit Spreads +200bps",
+      "type": "synthetic",
+      "description": "Credit spreads widen 200bps (0.02). Applied via each asset's credit_spread beta; hits LQD and especially HYG.",
+      "factor_shocks": { "credit_spread": 0.02 }
+    },
+    {
+      "name": "USD +10%",
+      "type": "synthetic",
+      "description": "Trade-weighted USD strengthens 10%. Applied via each asset's usd beta (gold, intl equity and oil fall; Treasuries little changed).",
+      "factor_shocks": { "usd": 0.10 }
+    }
+  ]
+}

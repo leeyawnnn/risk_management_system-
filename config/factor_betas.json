@@ -1,0 +1,15 @@
+{
+  "SPY":  { "equity": 1.00, "credit_spread": -0.30, "usd": -0.30 },
+  "QQQ":  { "equity": 1.10, "credit_spread": -0.30, "usd": -0.30 },
+  "EFA":  { "equity": 0.90, "credit_spread": -0.40, "usd": -0.60 },
+  "AAPL": { "equity": 1.15, "credit_spread": -0.20, "usd": -0.20 },
+  "MSFT": { "equity": 1.05, "credit_spread": -0.20, "usd": -0.20 },
+  "JPM":  { "equity": 1.10, "credit_spread": -0.80, "usd": -0.20 },
+  "XOM":  { "equity": 0.90, "credit_spread": -0.50, "usd": -0.30 },
+  "TLT":  { "equity": -0.20, "credit_spread": 0.00, "usd": 0.10 },
+  "IEF":  { "equity": -0.10, "credit_spread": 0.00, "usd": 0.05 },
+  "LQD":  { "equity": 0.10, "credit_spread": -2.00, "usd": 0.00 },
+  "HYG":  { "equity": 0.30, "credit_spread": -4.00, "usd": -0.10 },
+  "GLD":  { "equity": 0.10, "credit_spread": 0.00, "usd": -0.60 },
+  "USO":  { "equity": 0.50, "credit_spread": -0.30, "usd": -0.40 }
+}
