@@ -4,6 +4,8 @@
 // Phase 0. Real estimators land in later phases.
 namespace risk {
 
-const char* version() { return kVersionString; }
+const char* version() {
+  return kVersionString;
+}
 
 }  // namespace risk

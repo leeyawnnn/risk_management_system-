@@ -17,9 +17,10 @@ namespace risk {
 // Risk decomposition (Sigma = covariance, sigma_p = portfolio volatility):
 //   variance              v   = w^T Sigma w
 //   volatility            sigma_p = sqrt(v)
-//   marginal contribution MCR_i = (Sigma w)_i / sigma_p     (= d sigma_p / d w_i)
-//   component contribution CCR_i = w_i * MCR_i              (sums to sigma_p)
-//   percent contribution  CCR_i / sigma_p                   (sums to 1)
+//   marginal contribution MCR_i = (Sigma w)_i / sigma_p     (= d sigma_p / d
+//   w_i) component contribution CCR_i = w_i * MCR_i              (sums to
+//   sigma_p) percent contribution  CCR_i / sigma_p                   (sums to
+//   1)
 class Portfolio {
  public:
   Portfolio(std::vector<std::string> names, Eigen::VectorXd weights,
@@ -37,13 +38,14 @@ class Portfolio {
   Eigen::VectorXd return_series(const Eigen::MatrixXd& asset_returns) const;
 
   // ---- risk -----------------------------------------------------------------
-  double variance(const Eigen::MatrixXd& cov) const;     // w^T Sigma w
-  double volatility(const Eigen::MatrixXd& cov) const;   // sqrt(variance)
+  double variance(const Eigen::MatrixXd& cov) const;    // w^T Sigma w
+  double volatility(const Eigen::MatrixXd& cov) const;  // sqrt(variance)
 
   // Marginal contribution to risk per asset: (Sigma w) / sigma_p.
   Eigen::VectorXd marginal_contributions(const Eigen::MatrixXd& cov) const;
 
-  // Component contribution to risk per asset: w_i * MCR_i. Sums to volatility().
+  // Component contribution to risk per asset: w_i * MCR_i. Sums to
+  // volatility().
   Eigen::VectorXd component_contributions(const Eigen::MatrixXd& cov) const;
 
   // Percentage contribution per asset: CCR_i / sigma_p. Sums to 1.

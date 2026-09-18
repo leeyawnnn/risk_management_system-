@@ -22,7 +22,9 @@ Eigen::VectorXd gaussian_sample(int n, double mu, double sigma,
   for (int i = 0; i < n; ++i) v(i) = nd(gen);
   return v;
 }
-double sample_mean(const Eigen::VectorXd& v) { return v.mean(); }
+double sample_mean(const Eigen::VectorXd& v) {
+  return v.mean();
+}
 double sample_std(const Eigen::VectorXd& v) {
   const double m = v.mean();
   return std::sqrt((v.array() - m).square().sum() / (v.size() - 1));
@@ -54,8 +56,7 @@ TEST_CASE("parametric CVaR matches the empirical Gaussian tail mean",
   // Cross-check the closed form against a brute-force simulation tail mean.
   Eigen::VectorXd r = gaussian_sample(1'000'000, 0.0003, 0.012, 4242);
   const double conf = 0.95;
-  const double closed =
-      parametric_cvar(sample_mean(r), sample_std(r), conf);
+  const double closed = parametric_cvar(sample_mean(r), sample_std(r), conf);
   const double empirical = historical_cvar(r, conf);
   CHECK_THAT(empirical, WithinRel(closed, 0.03));
 }

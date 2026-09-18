@@ -12,8 +12,8 @@ namespace risk {
 // CVaR is the AVERAGE loss in the tail beyond VaR: the mean of the worst
 // (1 - confidence) fraction of outcomes. Like VaR it is reported as a POSITIVE
 // loss fraction, and by construction CVaR >= VaR in magnitude (the tail mean is
-// at least as deep as the tail quantile). Horizon scaling matches the VaR layer:
-// Historical & Parametric sqrt-time scale the 1-day figure; Monte Carlo
+// at least as deep as the tail quantile). Horizon scaling matches the VaR
+// layer: Historical & Parametric sqrt-time scale the 1-day figure; Monte Carlo
 // simulates the full path.
 
 // Mean of the worst `tail_prob` fraction of `data` (the smallest values). Uses

@@ -14,19 +14,15 @@ namespace {
 // The exact synthetic dataset from scripts/covariance_reference.py (T=8, N=3).
 Eigen::MatrixXd synthetic_X() {
   Eigen::MatrixXd X(8, 3);
-  X << 0.012, -0.004, 0.006,
-      -0.008, 0.011, -0.002,
-       0.015, -0.009, 0.004,
-       0.003, 0.002, -0.007,
-      -0.011, 0.006, 0.010,
-       0.007, -0.003, -0.001,
-      -0.005, 0.008, 0.003,
-       0.010, -0.006, -0.004;
+  X << 0.012, -0.004, 0.006, -0.008, 0.011, -0.002, 0.015, -0.009, 0.004, 0.003,
+      0.002, -0.007, -0.011, 0.006, 0.010, 0.007, -0.003, -0.001, -0.005, 0.008,
+      0.003, 0.010, -0.006, -0.004;
   return X;
 }
 
 // Compare every entry of two matrices to a tight absolute tolerance. The C++
-// and numpy algorithms are identical, so only summation-order round-off differs.
+// and numpy algorithms are identical, so only summation-order round-off
+// differs.
 void expect_matrix_eq(const Eigen::MatrixXd& got, const Eigen::MatrixXd& ref,
                       double tol = 1e-13) {
   REQUIRE(got.rows() == ref.rows());
@@ -56,11 +52,12 @@ TEST_CASE("is_symmetric / is_psd behave correctly", "[covariance][checks]") {
   CHECK_FALSE(is_psd(asym));
 }
 
-TEST_CASE("sample covariance matches numpy.cov (ddof=1)", "[covariance][sample]") {
+TEST_CASE("sample covariance matches numpy.cov (ddof=1)",
+          "[covariance][sample]") {
   Eigen::MatrixXd ref(3, 3);
   ref << 9.583928571428571e-05, -6.662499999999999e-05, -1.012500000000000e-05,
-        -6.662499999999999e-05,  5.198214285714285e-05,  1.339285714285714e-06,
-        -1.012500000000000e-05,  1.339285714285714e-06,  3.155357142857143e-05;
+      -6.662499999999999e-05, 5.198214285714285e-05, 1.339285714285714e-06,
+      -1.012500000000000e-05, 1.339285714285714e-06, 3.155357142857143e-05;
 
   Eigen::MatrixXd S = sample_covariance(synthetic_X());
   expect_matrix_eq(S, ref);
@@ -72,8 +69,8 @@ TEST_CASE("EWMA covariance matches the RiskMetrics reference",
           "[covariance][ewma]") {
   Eigen::MatrixXd ref(3, 3);
   ref << 8.104912065884224e-05, -5.650706832637623e-05, -1.282621742437049e-05,
-        -5.650706832637623e-05,  4.429090660398489e-05,  4.197848622365670e-06,
-        -1.282621742437049e-05,  4.197848622365672e-06,  2.743939393686789e-05;
+      -5.650706832637623e-05, 4.429090660398489e-05, 4.197848622365670e-06,
+      -1.282621742437049e-05, 4.197848622365672e-06, 2.743939393686789e-05;
 
   Eigen::MatrixXd EW = ewma_covariance(synthetic_X(), 0.94);
   expect_matrix_eq(EW, ref);
@@ -100,8 +97,8 @@ TEST_CASE("Ledoit-Wolf matches the constant-correlation reference",
           "[covariance][ledoitwolf]") {
   Eigen::MatrixXd ref(3, 3);
   ref << 8.385937500000000e-05, -4.700396916829431e-05, -1.160820285428923e-05,
-        -4.700396916829431e-05,  4.548437500000000e-05, -3.283443617676087e-06,
-        -1.160820285428923e-05, -3.283443617676087e-06,  2.760937500000000e-05;
+      -4.700396916829431e-05, 4.548437500000000e-05, -3.283443617676087e-06,
+      -1.160820285428923e-05, -3.283443617676087e-06, 2.760937500000000e-05;
 
   LedoitWolf lw = ledoit_wolf_covariance(synthetic_X());
   expect_matrix_eq(lw.cov, ref);
@@ -129,13 +126,13 @@ TEST_CASE("cov_to_correlation has unit diagonal and correct entries",
   for (Eigen::Index i = 0; i < C.rows(); ++i)
     CHECK_THAT(C(i, i), WithinAbs(1.0, 1e-15));
   // Off-diagonal matches s_ij / (sd_i sd_j).
-  const double expected01 =
-      S(0, 1) / (std::sqrt(S(0, 0)) * std::sqrt(S(1, 1)));
+  const double expected01 = S(0, 1) / (std::sqrt(S(0, 0)) * std::sqrt(S(1, 1)));
   CHECK_THAT(C(0, 1), WithinRel(expected01, 1e-12));
   CHECK(std::abs(C(0, 1)) <= 1.0);
 }
 
-TEST_CASE("shrinkage strictly improves conditioning", "[covariance][ledoitwolf]") {
+TEST_CASE("shrinkage strictly improves conditioning",
+          "[covariance][ledoitwolf]") {
   // The shrunk matrix should have a condition number no worse than the sample
   // covariance (shrinkage pulls eigenvalues toward the target).
   Eigen::MatrixXd X = synthetic_X();

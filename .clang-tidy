@@ -1,0 +1,25 @@
+# Checks are scoped to what actually matters for a numerical library: real
+# bugs, lifetime and narrowing issues, and modern-C++ hygiene. Style-only
+# checks are left to clang-format so the two tools never disagree.
+Checks: >
+  -*,
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  readability-*,
+  -bugprone-easily-swappable-parameters,
+  -misc-non-private-member-variables-in-classes,
+  -misc-include-cleaner,
+  -modernize-use-trailing-return-type,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  -readability-function-cognitive-complexity,
+  -readability-avoid-nested-conditional-operator,
+  -cert-err58-cpp
+
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*/(include/risk|src)/.*'
+FormatStyle: file

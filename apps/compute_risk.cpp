@@ -42,14 +42,21 @@ bool parse_args(int argc, char** argv, Args& a) {
   for (int i = 1; i < argc; ++i) {
     std::string s = argv[i];
     auto next = [&](const char* name) -> std::string {
-      if (i + 1 >= argc) throw std::invalid_argument(std::string("missing value for ") + name);
+      if (i + 1 >= argc)
+        throw std::invalid_argument(std::string("missing value for ") + name);
       return argv[++i];
     };
-    if (s == "--portfolio") a.portfolio = next("--portfolio");
-    else if (s == "--data") a.data = next("--data");
-    else if (s == "--output") a.output = next("--output");
-    else if (s == "--help" || s == "-h") { usage(); return false; }
-    else throw std::invalid_argument("unknown argument: " + s);
+    if (s == "--portfolio")
+      a.portfolio = next("--portfolio");
+    else if (s == "--data")
+      a.data = next("--data");
+    else if (s == "--output")
+      a.output = next("--output");
+    else if (s == "--help" || s == "-h") {
+      usage();
+      return false;
+    } else
+      throw std::invalid_argument("unknown argument: " + s);
   }
   return true;
 }
@@ -63,7 +70,8 @@ ReturnType parse_return_type(const std::string& s) {
 MissingPolicy parse_missing(const std::string& s) {
   if (s == "skip") return MissingPolicy::Skip;
   if (s == "fill_forward" || s == "ffill") return MissingPolicy::FillForward;
-  throw std::invalid_argument("missing_policy must be \"skip\" or \"fill_forward\"");
+  throw std::invalid_argument(
+      "missing_policy must be \"skip\" or \"fill_forward\"");
 }
 
 }  // namespace
@@ -84,7 +92,8 @@ int main(int argc, char** argv) try {
   const std::string name = cfg.value("name", "Portfolio");
   const double notional = cfg.value("notional", 1.0);
   const ReturnType rtype = parse_return_type(cfg.value("return_type", "log"));
-  const MissingPolicy missing = parse_missing(cfg.value("missing_policy", "skip"));
+  const MissingPolicy missing =
+      parse_missing(cfg.value("missing_policy", "skip"));
   const double annual = cfg.value("annualization_factor", 252.0);
   const std::string cov_method = cfg.value("covariance", "sample");
   const double lambda = cfg.value("ewma_lambda", 0.94);
@@ -108,9 +117,8 @@ int main(int argc, char** argv) try {
     weights_v.push_back(pos.at("weight").get<double>());
     if (pos.contains("sector")) sectors[a] = pos["sector"];
   }
-  Eigen::VectorXd weights =
-      Eigen::Map<Eigen::VectorXd>(weights_v.data(),
-                                  static_cast<Eigen::Index>(weights_v.size()));
+  Eigen::VectorXd weights = Eigen::Map<Eigen::VectorXd>(
+      weights_v.data(), static_cast<Eigen::Index>(weights_v.size()));
   Portfolio portfolio(assets, weights, notional);
 
   // ---- load return series for each asset -----------------------------------
@@ -125,10 +133,14 @@ int main(int argc, char** argv) try {
 
   // ---- covariance ----------------------------------------------------------
   Eigen::MatrixXd cov;
-  if (cov_method == "sample") cov = sample_covariance(X);
-  else if (cov_method == "ewma") cov = ewma_covariance(X, lambda);
-  else if (cov_method == "ledoit_wolf") cov = ledoit_wolf_covariance(X).cov;
-  else throw std::invalid_argument("unknown covariance method: " + cov_method);
+  if (cov_method == "sample")
+    cov = sample_covariance(X);
+  else if (cov_method == "ewma")
+    cov = ewma_covariance(X, lambda);
+  else if (cov_method == "ledoit_wolf")
+    cov = ledoit_wolf_covariance(X).cov;
+  else
+    throw std::invalid_argument("unknown covariance method: " + cov_method);
 
   if (!is_psd(cov)) {
     std::cerr << "error: estimated covariance is not positive semi-definite\n";
@@ -172,7 +184,8 @@ int main(int argc, char** argv) try {
             << " | top: " << rep.attribution.concentration.max_contributor
             << " (" << rep.attribution.concentration.max_contribution * 100
             << "%)\n";
-  std::cout << "Reports written to " << args.output << "report.json, report.md, "
+  std::cout << "Reports written to " << args.output
+            << "report.json, report.md, "
             << "figures/*.svg\n";
   return 0;
 } catch (const std::exception& e) {

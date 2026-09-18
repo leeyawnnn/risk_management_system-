@@ -66,10 +66,11 @@ ReturnSeries ReturnSeries::from_prices(const std::vector<std::string>& dates,
     if (type == ReturnType::Log && (p0 <= 0.0 || p1 <= 0.0)) {
       throw std::invalid_argument(
           "ReturnSeries::from_prices: non-positive price encountered for a log "
-          "return (date " + dates[i] + ")");
+          "return (date " +
+          dates[i] + ")");
     }
-    const double r = (type == ReturnType::Log) ? std::log(p1 / p0)
-                                               : (p1 / p0 - 1.0);
+    const double r =
+        (type == ReturnType::Log) ? std::log(p1 / p0) : (p1 / p0 - 1.0);
     rs.returns_(static_cast<Eigen::Index>(i - 1)) = r;
     rs.dates_.push_back(dates[i]);  // label = end-of-step date
   }
@@ -121,7 +122,7 @@ ReturnSeries ReturnSeries::from_csv(const std::string& path, ReturnType type,
         case MissingPolicy::FillForward:
           if (!have_last_valid) continue;  // nothing to carry yet
           dates.push_back(date_field);
-          prices.push_back(last_valid);    // carry → zero return this day
+          prices.push_back(last_valid);  // carry → zero return this day
           continue;
       }
     }
@@ -152,7 +153,9 @@ double ReturnSeries::variance() const {
   return (returns_.array() - m).square().sum() / static_cast<double>(n - 1);
 }
 
-double ReturnSeries::stdev() const { return std::sqrt(variance()); }
+double ReturnSeries::stdev() const {
+  return std::sqrt(variance());
+}
 
 double ReturnSeries::annualized_mean() const {
   return mean() * annualization_factor_;
@@ -162,7 +165,9 @@ double ReturnSeries::annualized_vol() const {
   return stdev() * std::sqrt(annualization_factor_);
 }
 
-double ReturnSeries::sum() const { return returns_.sum(); }
+double ReturnSeries::sum() const {
+  return returns_.sum();
+}
 
 double ReturnSeries::cumulative_return() const {
   if (type_ == ReturnType::Log) {

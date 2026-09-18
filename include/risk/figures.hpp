@@ -21,13 +21,15 @@ std::string svg_correlation_heatmap(const Eigen::MatrixXd& correlation,
 std::string svg_risk_contribution_bars(const RiskAttribution& attribution);
 
 // Histogram of portfolio returns with vertical markers at the return levels
-// implied by VaR and CVaR (i.e. at -var and -cvar). confidence labels the lines.
+// implied by VaR and CVaR (i.e. at -var and -cvar). confidence labels the
+// lines.
 std::string svg_return_histogram(const Eigen::VectorXd& portfolio_returns,
                                  double var, double cvar, double confidence,
                                  int bins = 40);
 
 // Horizontal bar chart of annualized volatility per instrument, coloured by
-// sector (a simple legend is drawn). Bars are sorted from most to least volatile.
+// sector (a simple legend is drawn). Bars are sorted from most to least
+// volatile.
 std::string svg_asset_volatility(const std::vector<std::string>& names,
                                  const std::vector<double>& annual_vol,
                                  const std::vector<std::string>& sectors);
@@ -40,8 +42,8 @@ std::string svg_weight_vs_risk(const std::vector<std::string>& names,
 
 // Grouped bar chart of 95% and 99% 1-day VaR under each covariance estimator.
 std::string svg_estimator_var_comparison(
-    const std::vector<std::string>& methods,
-    const std::vector<double>& var95, const std::vector<double>& var99);
+    const std::vector<std::string>& methods, const std::vector<double>& var95,
+    const std::vector<double>& var99);
 
 // Time series of daily portfolio returns against the -VaR line, with breaches
 // (returns below -var_level) highlighted in red.

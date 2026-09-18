@@ -60,7 +60,8 @@ TEST_CASE("concentration identifies the largest contributor",
   CHECK(a.concentration.effective_num_bets < 3.0);
 }
 
-TEST_CASE("sector roll-up sums position contributions", "[attribution][sector]") {
+TEST_CASE("sector roll-up sums position contributions",
+          "[attribution][sector]") {
   auto p = equal_weight3();
   std::map<std::string, std::string> sectors = {
       {"A", "Equity"}, {"B", "Equity"}, {"C", "Bonds"}};
@@ -77,12 +78,8 @@ TEST_CASE("sector roll-up sums position contributions", "[attribution][sector]")
 TEST_CASE("report builds and serializes to JSON and Markdown", "[reporter]") {
   // Two assets, simple synthetic returns.
   Eigen::MatrixXd X(6, 2);
-  X << 0.01, -0.005,
-       -0.002, 0.004,
-       0.003, 0.001,
-       -0.006, 0.002,
-       0.004, -0.003,
-       0.002, 0.0;
+  X << 0.01, -0.005, -0.002, 0.004, 0.003, 0.001, -0.006, 0.002, 0.004, -0.003,
+      0.002, 0.0;
   Eigen::VectorXd w(2);
   w << 0.5, 0.5;
   Portfolio p({"X", "Y"}, w, 1'000'000.0);
@@ -115,14 +112,9 @@ TEST_CASE("report builds and serializes to JSON and Markdown", "[reporter]") {
 TEST_CASE("report includes asset stats, estimator comparison, and backtest",
           "[reporter][detail]") {
   Eigen::MatrixXd X(8, 3);
-  X << 0.012, -0.004, 0.006,
-      -0.008, 0.011, -0.002,
-       0.015, -0.009, 0.004,
-       0.003, 0.002, -0.007,
-      -0.011, 0.006, 0.010,
-       0.007, -0.003, -0.001,
-      -0.005, 0.008, 0.003,
-       0.010, -0.006, -0.004;
+  X << 0.012, -0.004, 0.006, -0.008, 0.011, -0.002, 0.015, -0.009, 0.004, 0.003,
+      0.002, -0.007, -0.011, 0.006, 0.010, 0.007, -0.003, -0.001, -0.005, 0.008,
+      0.003, 0.010, -0.006, -0.004;
   Eigen::VectorXd w(3);
   w << 0.5, 0.3, 0.2;
   Portfolio p({"A", "B", "C"}, w, 1'000'000.0);
@@ -130,8 +122,8 @@ TEST_CASE("report includes asset stats, estimator comparison, and backtest",
   std::map<std::string, std::string> sectors = {
       {"A", "Equity"}, {"B", "Rates"}, {"C", "Commodity"}};
 
-  RiskReport rep = build_report("Detail", p, X, cov, "sample", 252.0, {0.95, 0.99},
-                                {1}, {}, sectors, 20000, 7);
+  RiskReport rep = build_report("Detail", p, X, cov, "sample", 252.0,
+                                {0.95, 0.99}, {1}, {}, sectors, 20000, 7);
 
   // Per-asset stats: one per asset, pct_risk sums to 1.
   REQUIRE(rep.asset_stats.size() == 3);

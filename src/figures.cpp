@@ -22,10 +22,17 @@ std::string esc(const std::string& s) {
   std::string out;
   for (char c : s) {
     switch (c) {
-      case '&': out += "&amp;"; break;
-      case '<': out += "&lt;"; break;
-      case '>': out += "&gt;"; break;
-      default: out += c;
+      case '&':
+        out += "&amp;";
+        break;
+      case '<':
+        out += "&lt;";
+        break;
+      case '>':
+        out += "&gt;";
+        break;
+      default:
+        out += c;
     }
   }
   return out;
@@ -60,10 +67,11 @@ std::string svg_correlation_heatmap(const Eigen::MatrixXd& correlation,
   const int h = margin + n * cell + 20;
 
   std::ostringstream s;
-  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w << "\" height=\""
-    << h << "\" font-family=\"sans-serif\">\n";
+  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w
+    << "\" height=\"" << h << "\" font-family=\"sans-serif\">\n";
   s << "<rect width=\"" << w << "\" height=\"" << h << "\" fill=\"white\"/>\n";
-  s << "<text x=\"" << margin << "\" y=\"30\" font-size=\"18\" font-weight=\"bold\">"
+  s << "<text x=\"" << margin
+    << "\" y=\"30\" font-size=\"18\" font-weight=\"bold\">"
     << "Correlation matrix</text>\n";
 
   for (int i = 0; i < n; ++i) {
@@ -112,13 +120,14 @@ std::string svg_risk_contribution_bars(const RiskAttribution& a) {
   const double scale = (plot_w * 0.7) / maxabs;
 
   std::ostringstream s;
-  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w << "\" height=\""
-    << h << "\" font-family=\"sans-serif\">\n";
+  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w
+    << "\" height=\"" << h << "\" font-family=\"sans-serif\">\n";
   s << "<rect width=\"" << w << "\" height=\"" << h << "\" fill=\"white\"/>\n";
   s << "<text x=\"20\" y=\"30\" font-size=\"18\" font-weight=\"bold\">"
     << "Percentage risk contribution by position</text>\n";
   s << "<line x1=\"" << zero_x << "\" y1=\"" << (margin_top - 10) << "\" x2=\""
-    << zero_x << "\" y2=\"" << (margin_top + n * row) << "\" stroke=\"#333\"/>\n";
+    << zero_x << "\" y2=\"" << (margin_top + n * row)
+    << "\" stroke=\"#333\"/>\n";
 
   for (int i = 0; i < n; ++i) {
     const double pct = a.percent(i);
@@ -163,26 +172,27 @@ std::string svg_return_histogram(const Eigen::VectorXd& r, double var,
   const int w = margin + plot_w + 30;
   const int h = margin + plot_h + 70;
 
-  auto x_of = [&](double val) {
-    return margin + (val - lo) / span * plot_w;
-  };
+  auto x_of = [&](double val) { return margin + (val - lo) / span * plot_w; };
 
   std::ostringstream s;
-  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w << "\" height=\""
-    << h << "\" font-family=\"sans-serif\">\n";
+  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w
+    << "\" height=\"" << h << "\" font-family=\"sans-serif\">\n";
   s << "<rect width=\"" << w << "\" height=\"" << h << "\" fill=\"white\"/>\n";
-  s << "<text x=\"" << margin << "\" y=\"30\" font-size=\"18\" font-weight=\"bold\">"
+  s << "<text x=\"" << margin
+    << "\" y=\"30\" font-size=\"18\" font-weight=\"bold\">"
     << "Portfolio return distribution (" << fmt(confidence * 100, 0)
     << "% VaR / CVaR)</text>\n";
 
   // Bars.
   for (int b = 0; b < bins; ++b) {
     const double x0 = margin + static_cast<double>(b) / bins * plot_w;
-    const double bar_h = static_cast<double>(counts[static_cast<std::size_t>(b)]) /
-                         maxc * plot_h;
-    s << "<rect x=\"" << fmt(x0, 1) << "\" y=\"" << fmt(margin + plot_h - bar_h, 1)
-      << "\" width=\"" << fmt(plot_w / static_cast<double>(bins) - 1.0, 1)
-      << "\" height=\"" << fmt(bar_h, 1) << "\" fill=\"#9ecae1\"/>\n";
+    const double bar_h =
+        static_cast<double>(counts[static_cast<std::size_t>(b)]) / maxc *
+        plot_h;
+    s << "<rect x=\"" << fmt(x0, 1) << "\" y=\""
+      << fmt(margin + plot_h - bar_h, 1) << "\" width=\""
+      << fmt(plot_w / static_cast<double>(bins) - 1.0, 1) << "\" height=\""
+      << fmt(bar_h, 1) << "\" fill=\"#9ecae1\"/>\n";
   }
 
   // Axis baseline.
@@ -225,8 +235,10 @@ namespace {
 // A small fixed palette keyed by sector label.
 std::string sector_color(const std::string& sector) {
   static const std::vector<std::pair<std::string, std::string>> palette = {
-      {"Equity", "#1f77b4"},  {"Rates", "#2ca02c"},
-      {"Credit", "#ff7f0e"},  {"Commodity", "#9467bd"}};
+      {"Equity", "#1f77b4"},
+      {"Rates", "#2ca02c"},
+      {"Credit", "#ff7f0e"},
+      {"Commodity", "#9467bd"}};
   for (const auto& [k, v] : palette)
     if (k == sector) return v;
   return "#7f7f7f";
@@ -240,9 +252,10 @@ std::string svg_asset_volatility(const std::vector<std::string>& names,
   // Sort indices by descending volatility.
   std::vector<int> idx(n);
   for (int i = 0; i < n; ++i) idx[static_cast<std::size_t>(i)] = i;
-  std::sort(idx.begin(), idx.end(),
-            [&](int a, int b) { return annual_vol[static_cast<std::size_t>(a)] >
-                                       annual_vol[static_cast<std::size_t>(b)]; });
+  std::sort(idx.begin(), idx.end(), [&](int a, int b) {
+    return annual_vol[static_cast<std::size_t>(a)] >
+           annual_vol[static_cast<std::size_t>(b)];
+  });
 
   const int row = 26;
   const int margin_left = 70;
@@ -257,8 +270,8 @@ std::string svg_asset_volatility(const std::vector<std::string>& names,
   const double scale = plot_w / maxv;
 
   std::ostringstream s;
-  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w << "\" height=\""
-    << h << "\" font-family=\"sans-serif\">\n";
+  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w
+    << "\" height=\"" << h << "\" font-family=\"sans-serif\">\n";
   s << "<rect width=\"" << w << "\" height=\"" << h << "\" fill=\"white\"/>\n";
   s << "<text x=\"20\" y=\"30\" font-size=\"18\" font-weight=\"bold\">"
     << "Annualized volatility by instrument</text>\n";
@@ -274,12 +287,14 @@ std::string svg_asset_volatility(const std::vector<std::string>& names,
     s << "<text x=\"" << (margin_left - 8) << "\" y=\"" << (y + row / 2 + 3)
       << "\" font-size=\"12\" text-anchor=\"end\">"
       << esc(names[static_cast<std::size_t>(i)]) << "</text>\n";
-    s << "<text x=\"" << (margin_left + len + 6) << "\" y=\"" << (y + row / 2 + 3)
-      << "\" font-size=\"11\">" << fmt(v * 100, 1) << "%</text>\n";
+    s << "<text x=\"" << (margin_left + len + 6) << "\" y=\""
+      << (y + row / 2 + 3) << "\" font-size=\"11\">" << fmt(v * 100, 1)
+      << "%</text>\n";
   }
 
   // Legend.
-  const std::vector<std::string> secs = {"Equity", "Rates", "Credit", "Commodity"};
+  const std::vector<std::string> secs = {"Equity", "Rates", "Credit",
+                                         "Commodity"};
   int lx = margin_left;
   const int ly = margin_top + n * row + 22;
   for (const auto& sec : secs) {
@@ -312,8 +327,8 @@ std::string svg_weight_vs_risk(const std::vector<std::string>& names,
   const double scale = plot_w / maxv;
 
   std::ostringstream s;
-  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w << "\" height=\""
-    << h << "\" font-family=\"sans-serif\">\n";
+  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w
+    << "\" height=\"" << h << "\" font-family=\"sans-serif\">\n";
   s << "<rect width=\"" << w << "\" height=\"" << h << "\" fill=\"white\"/>\n";
   s << "<text x=\"20\" y=\"30\" font-size=\"18\" font-weight=\"bold\">"
     << "Capital weight vs. risk share</text>\n";
@@ -325,8 +340,10 @@ std::string svg_weight_vs_risk(const std::vector<std::string>& names,
 
   for (int i = 0; i < n; ++i) {
     const int y = margin_top + i * row;
-    const int wlen = static_cast<int>(weights[static_cast<std::size_t>(i)] * scale);
-    const int rlen = static_cast<int>(pct_risk[static_cast<std::size_t>(i)] * scale);
+    const int wlen =
+        static_cast<int>(weights[static_cast<std::size_t>(i)] * scale);
+    const int rlen =
+        static_cast<int>(pct_risk[static_cast<std::size_t>(i)] * scale);
     s << "<rect x=\"" << margin_left << "\" y=\"" << (y + 3) << "\" width=\""
       << wlen << "\" height=\"11\" fill=\"#bbbbbb\"/>\n";
     s << "<rect x=\"" << margin_left << "\" y=\"" << (y + 16) << "\" width=\""
@@ -360,8 +377,8 @@ std::string svg_estimator_var_comparison(
   const double scale = plot_h / (maxv * 1.15);
 
   std::ostringstream s;
-  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w << "\" height=\""
-    << h << "\" font-family=\"sans-serif\">\n";
+  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w
+    << "\" height=\"" << h << "\" font-family=\"sans-serif\">\n";
   s << "<rect width=\"" << w << "\" height=\"" << h << "\" fill=\"white\"/>\n";
   s << "<text x=\"20\" y=\"30\" font-size=\"18\" font-weight=\"bold\">"
     << "1-day VaR by covariance estimator</text>\n";
@@ -377,11 +394,14 @@ std::string svg_estimator_var_comparison(
 
   for (int i = 0; i < g; ++i) {
     const int gx = margin + i * group_w + 20;
-    const int h95 = static_cast<int>(var95[static_cast<std::size_t>(i)] * scale);
-    const int h99 = static_cast<int>(var99[static_cast<std::size_t>(i)] * scale);
+    const int h95 =
+        static_cast<int>(var95[static_cast<std::size_t>(i)] * scale);
+    const int h99 =
+        static_cast<int>(var99[static_cast<std::size_t>(i)] * scale);
     s << "<rect x=\"" << gx << "\" y=\"" << (base - h95) << "\" width=\"36\" "
       << "height=\"" << h95 << "\" fill=\"#6baed6\"/>\n";
-    s << "<rect x=\"" << (gx + 42) << "\" y=\"" << (base - h99) << "\" width=\"36\" "
+    s << "<rect x=\"" << (gx + 42) << "\" y=\"" << (base - h99)
+      << "\" width=\"36\" "
       << "height=\"" << h99 << "\" fill=\"#08519c\"/>\n";
     s << "<text x=\"" << (gx + 18) << "\" y=\"" << (base - h95 - 4)
       << "\" font-size=\"10\" text-anchor=\"middle\">"
@@ -413,12 +433,14 @@ std::string svg_var_backtest(const Eigen::VectorXd& r, double var_level,
   if (maxabs <= 0.0) maxabs = 1.0;
   const int mid = margin + plot_h / 2;
   const double yscale = (plot_h / 2.0) / (maxabs * 1.05);
-  auto x_of = [&](int t) { return margin + static_cast<double>(t) / (T - 1) * plot_w; };
+  auto x_of = [&](int t) {
+    return margin + static_cast<double>(t) / (T - 1) * plot_w;
+  };
   auto y_of = [&](double v) { return mid - v * yscale; };
 
   std::ostringstream s;
-  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w << "\" height=\""
-    << h << "\" font-family=\"sans-serif\">\n";
+  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w
+    << "\" height=\"" << h << "\" font-family=\"sans-serif\">\n";
   s << "<rect width=\"" << w << "\" height=\"" << h << "\" fill=\"white\"/>\n";
   s << "<text x=\"20\" y=\"30\" font-size=\"18\" font-weight=\"bold\">"
     << "VaR backtest: daily returns vs " << fmt(confidence * 100, 0)
@@ -430,7 +452,8 @@ std::string svg_var_backtest(const Eigen::VectorXd& r, double var_level,
   const double yvar = y_of(-var_level);
   s << "<line x1=\"" << margin << "\" y1=\"" << fmt(yvar, 1) << "\" x2=\""
     << (margin + plot_w) << "\" y2=\"" << fmt(yvar, 1)
-    << "\" stroke=\"#d62728\" stroke-width=\"1.5\" stroke-dasharray=\"6,3\"/>\n";
+    << "\" stroke=\"#d62728\" stroke-width=\"1.5\" "
+       "stroke-dasharray=\"6,3\"/>\n";
   s << "<text x=\"" << (margin + 4) << "\" y=\"" << fmt(yvar - 4, 1)
     << "\" font-size=\"11\" fill=\"#d62728\">-VaR " << fmt(var_level * 100, 2)
     << "%</text>\n";
@@ -443,13 +466,14 @@ std::string svg_var_backtest(const Eigen::VectorXd& r, double var_level,
     const bool breach = v < -var_level;
     if (breach) ++breaches;
     const char* col = breach ? "#d62728" : "#9ecae1";
-    s << "<line x1=\"" << fmt(x, 1) << "\" y1=\"" << mid << "\" x2=\"" << fmt(x, 1)
-      << "\" y2=\"" << fmt(y_of(v), 1) << "\" stroke=\"" << col << "\" stroke-width=\"1\"/>\n";
+    s << "<line x1=\"" << fmt(x, 1) << "\" y1=\"" << mid << "\" x2=\""
+      << fmt(x, 1) << "\" y2=\"" << fmt(y_of(v), 1) << "\" stroke=\"" << col
+      << "\" stroke-width=\"1\"/>\n";
   }
   s << "<text x=\"" << margin << "\" y=\"" << (margin + plot_h + 35)
     << "\" font-size=\"12\">" << breaches << " breaches in " << T
-    << " days (expected " << fmt((1.0 - confidence) * T, 0)
-    << " at " << fmt(confidence * 100, 0) << "% confidence)</text>\n";
+    << " days (expected " << fmt((1.0 - confidence) * T, 0) << " at "
+    << fmt(confidence * 100, 0) << "% confidence)</text>\n";
   s << "</svg>\n";
   return s.str();
 }
@@ -461,7 +485,8 @@ void write_figures(const Eigen::MatrixXd& correlation,
                    double cvar, double confidence, const std::string& dir) {
   auto dump = [&](const std::string& file, const std::string& content) {
     std::ofstream out(dir + "/" + file);
-    if (!out) throw std::invalid_argument("write_figures: cannot write " + file);
+    if (!out)
+      throw std::invalid_argument("write_figures: cannot write " + file);
     out << content;
   };
   dump("correlation.svg", svg_correlation_heatmap(correlation, names));

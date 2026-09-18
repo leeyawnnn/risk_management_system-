@@ -73,12 +73,12 @@ RiskReport build_report(const std::string& name, const Portfolio& portfolio,
 
   for (double conf : confidences) {
     for (int h : horizons) {
-      rep.var_cvar.push_back(
-          {"Historical", conf, h, historical_var(rep.portfolio_returns, conf, h),
-           historical_cvar(rep.portfolio_returns, conf, h)});
-      rep.var_cvar.push_back(
-          {"Parametric", conf, h, parametric_var(port_mean, port_sigma, conf, h),
-           parametric_cvar(port_mean, port_sigma, conf, h)});
+      rep.var_cvar.push_back({"Historical", conf, h,
+                              historical_var(rep.portfolio_returns, conf, h),
+                              historical_cvar(rep.portfolio_returns, conf, h)});
+      rep.var_cvar.push_back({"Parametric", conf, h,
+                              parametric_var(port_mean, port_sigma, conf, h),
+                              parametric_cvar(port_mean, port_sigma, conf, h)});
       rep.var_cvar.push_back(
           {"MonteCarlo", conf, h,
            monte_carlo_var(asset_mean, cov, w, conf, h, mc_draws, seed),
@@ -91,9 +91,11 @@ RiskReport build_report(const std::string& name, const Portfolio& portfolio,
   // ---- per-asset statistics (for comparison) -------------------------------
   const Eigen::Index T = asset_returns.rows();
   const Eigen::Index N = asset_returns.cols();
-  const double port_sd = std::sqrt(
-      (rep.portfolio_returns.array() - rep.portfolio_returns.mean()).square().sum() /
-      static_cast<double>(T - 1));
+  const double port_sd =
+      std::sqrt((rep.portfolio_returns.array() - rep.portfolio_returns.mean())
+                    .square()
+                    .sum() /
+                static_cast<double>(T - 1));
   for (Eigen::Index a = 0; a < N; ++a) {
     const Eigen::VectorXd col = asset_returns.col(a);
     const double mu = col.mean();
@@ -109,14 +111,12 @@ RiskReport build_report(const std::string& name, const Portfolio& portfolio,
     st.sharpe = (st.annual_vol > 0.0) ? st.annual_return / st.annual_vol : 0.0;
     st.pct_risk = rep.attribution.percent(a);
     // Correlation of this asset with the portfolio return series.
-    const double cov_ap =
-        ((col.array() - mu) *
-         (rep.portfolio_returns.array() - rep.portfolio_returns.mean()))
-            .sum() /
-        static_cast<double>(T - 1);
-    st.corr_to_portfolio = (sd > 0.0 && port_sd > 0.0)
-                               ? cov_ap / (sd * port_sd)
-                               : 0.0;
+    const double cov_ap = ((col.array() - mu) * (rep.portfolio_returns.array() -
+                                                 rep.portfolio_returns.mean()))
+                              .sum() /
+                          static_cast<double>(T - 1);
+    st.corr_to_portfolio =
+        (sd > 0.0 && port_sd > 0.0) ? cov_ap / (sd * port_sd) : 0.0;
     rep.asset_stats.push_back(st);
   }
 
@@ -280,8 +280,8 @@ std::string to_markdown(const RiskReport& rep) {
          "Corr. to ptf | % of risk |\n";
     m << "|---|---|---:|---:|---:|---:|---:|---:|\n";
     for (const auto& a : rep.asset_stats) {
-      m << "| " << a.name << " | " << a.sector << " | " << pct(a.weight) << " | "
-        << pct(a.annual_vol) << " | " << pct(a.annual_return) << " | "
+      m << "| " << a.name << " | " << a.sector << " | " << pct(a.weight)
+        << " | " << pct(a.annual_vol) << " | " << pct(a.annual_return) << " | "
         << num(a.sharpe, 2) << " | " << num(a.corr_to_portfolio, 2) << " | "
         << pct(a.pct_risk) << " |\n";
     }
@@ -303,8 +303,10 @@ std::string to_markdown(const RiskReport& rep) {
   // Estimator comparison.
   if (!rep.estimator_comparison.empty()) {
     m << "## Covariance estimator comparison\n\n";
-    m << "The same portfolio, priced with three different covariance estimators."
-         " Divergence here is *model risk*: the VaR number you report depends on"
+    m << "The same portfolio, priced with three different covariance "
+         "estimators."
+         " Divergence here is *model risk*: the VaR number you report depends "
+         "on"
          " how you estimated `Sigma`.\n\n";
     m << "| Estimator | Daily vol | Annual vol | 95% 1d VaR | 99% 1d VaR |\n";
     m << "|---|---:|---:|---:|---:|\n";
@@ -325,7 +327,8 @@ std::string to_markdown(const RiskReport& rep) {
          "Actual rate | Verdict |\n";
     m << "|---:|---:|---:|---:|---:|---|\n";
     for (const auto& b : rep.backtests) {
-      const double expected = b.expected_rate * static_cast<double>(b.observations);
+      const double expected =
+          b.expected_rate * static_cast<double>(b.observations);
       const char* verdict =
           (b.actual_rate <= b.expected_rate * 1.5) ? "OK" : "too optimistic";
       m << "| " << pct(b.confidence, 0) << " | " << b.observations << " | "
@@ -384,7 +387,8 @@ std::string to_markdown(const RiskReport& rep) {
   m << "**Risk contribution by position** — each bar is a share of total "
        "portfolio volatility (bars sum to 100%).\n\n";
   m << "![Risk contributions](figures/risk_contributions.svg)\n\n";
-  m << "**Return distribution** — daily portfolio returns with the VaR and CVaR "
+  m << "**Return distribution** — daily portfolio returns with the VaR and "
+       "CVaR "
        "thresholds marked.\n\n";
   m << "![Return distribution](figures/return_distribution.svg)\n\n";
   m << "**Estimator comparison** — 95% / 99% VaR under each covariance "
@@ -400,9 +404,11 @@ std::string to_markdown(const RiskReport& rep) {
     const StressResult* worst = &rep.stress.front();
     for (const auto& s : rep.stress)
       if (s.dollar_pnl < worst->dollar_pnl) worst = &s;
-    m << "- **Tail vs. routine risk.** Daily 99% VaR is on the order of a single"
-         " bad session, but the worst stress scenario, **" << worst->name
-      << "**, costs " << pct(worst->pct_pnl) << " (" << money(worst->dollar_pnl)
+    m << "- **Tail vs. routine risk.** Daily 99% VaR is on the order of a "
+         "single"
+         " bad session, but the worst stress scenario, **"
+      << worst->name << "**, costs " << pct(worst->pct_pnl) << " ("
+      << money(worst->dollar_pnl)
       << ") — an order of magnitude larger. VaR and stress answer different "
          "questions; report both.\n";
   }
@@ -418,7 +424,10 @@ std::string to_markdown(const RiskReport& rep) {
     double best = -1.0;
     for (const auto& s : rep.asset_stats) {
       const double gap = std::abs(s.pct_risk - s.weight);
-      if (gap > best) { best = gap; div = &s; }
+      if (gap > best) {
+        best = gap;
+        div = &s;
+      }
     }
     m << "- **Weight != risk.** **" << div->name << "** is " << pct(div->weight)
       << " of capital but " << pct(div->pct_risk)
@@ -427,10 +436,12 @@ std::string to_markdown(const RiskReport& rep) {
   // Diversifiers (negative correlation to the book).
   for (const auto& s : rep.asset_stats) {
     if (s.corr_to_portfolio < 0.0) {
-      m << "- **Diversifier.** **" << s.name << "** is negatively correlated to "
-           "the book (" << num(s.corr_to_portfolio, 2)
-        << "), so it *reduces* total risk despite its own "
-        << pct(s.annual_vol) << " volatility.\n";
+      m << "- **Diversifier.** **" << s.name
+        << "** is negatively correlated to "
+           "the book ("
+        << num(s.corr_to_portfolio, 2)
+        << "), so it *reduces* total risk despite its own " << pct(s.annual_vol)
+        << " volatility.\n";
       break;
     }
   }
@@ -444,7 +455,8 @@ std::string to_markdown(const RiskReport& rep) {
     }
     m << "- **Model risk.** The 95% VaR ranges from " << pct(lo) << " to "
       << pct(hi) << " across covariance estimators — the same book, a "
-      << num((hi / lo - 1.0) * 100.0, 0) << "% spread purely from estimation "
+      << num((hi / lo - 1.0) * 100.0, 0)
+      << "% spread purely from estimation "
          "choice.\n";
   }
   return m.str();
@@ -452,7 +464,8 @@ std::string to_markdown(const RiskReport& rep) {
 
 void write_reports(const RiskReport& rep, const std::string& dir) {
   std::ofstream js(dir + "/report.json");
-  if (!js) throw std::invalid_argument("write_reports: cannot write report.json");
+  if (!js)
+    throw std::invalid_argument("write_reports: cannot write report.json");
   js << to_json(rep);
 
   std::ofstream md(dir + "/report.md");
@@ -463,12 +476,15 @@ void write_reports(const RiskReport& rep, const std::string& dir) {
 void write_all_figures(const RiskReport& rep, const std::string& dir) {
   auto dump = [&](const std::string& file, const std::string& content) {
     std::ofstream out(dir + "/" + file);
-    if (!out) throw std::invalid_argument("write_all_figures: cannot write " + file);
+    if (!out)
+      throw std::invalid_argument("write_all_figures: cannot write " + file);
     out << content;
   };
 
-  // Distribution markers: historical VaR/CVaR at the first requested confidence.
-  const double conf = rep.var_cvar.empty() ? 0.95 : rep.var_cvar.front().confidence;
+  // Distribution markers: historical VaR/CVaR at the first requested
+  // confidence.
+  const double conf =
+      rep.var_cvar.empty() ? 0.95 : rep.var_cvar.front().confidence;
   const double fig_var = historical_var(rep.portfolio_returns, conf, 1);
   const double fig_cvar = historical_cvar(rep.portfolio_returns, conf, 1);
 
@@ -499,7 +515,8 @@ void write_all_figures(const RiskReport& rep, const std::string& dir) {
   if (!rep.estimator_comparison.empty())
     dump("estimator_comparison.svg",
          svg_estimator_var_comparison(methods, var95, var99));
-  dump("var_backtest.svg", svg_var_backtest(rep.portfolio_returns, fig_var, conf));
+  dump("var_backtest.svg",
+       svg_var_backtest(rep.portfolio_returns, fig_var, conf));
 }
 
 }  // namespace risk

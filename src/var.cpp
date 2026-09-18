@@ -31,7 +31,7 @@ double normal_ppf(double p) {
                              -1.328068155288572e+01};
   static const double c[] = {-7.784894002430293e-03, -3.223964580411365e-01,
                              -2.400758277161838e+00, -2.549732539343734e+00,
-                             4.374664141464968e+00, 2.938163982698783e+00};
+                             4.374664141464968e+00,  2.938163982698783e+00};
   static const double d[] = {7.784695709041462e-03, 3.224671290700398e-01,
                              2.445134137142996e+00, 3.754408661907416e+00};
   const double plow = 0.02425;
@@ -67,7 +67,8 @@ double empirical_quantile(std::vector<double>& data, double q) {
   }
   q = std::clamp(q, 0.0, 1.0);
   const std::size_t n = data.size();
-  std::size_t k = static_cast<std::size_t>(std::floor(q * static_cast<double>(n)));
+  std::size_t k =
+      static_cast<std::size_t>(std::floor(q * static_cast<double>(n)));
   if (k >= n) k = n - 1;
   // Partition so that data[k] holds the k-th smallest element. O(n) average.
   std::nth_element(data.begin(), data.begin() + static_cast<std::ptrdiff_t>(k),
@@ -164,10 +165,11 @@ double monte_carlo_var(const Eigen::VectorXd& mean, const Eigen::MatrixXd& cov,
                        const Eigen::VectorXd& weights, double confidence,
                        int horizon_days, int draws, std::uint64_t seed) {
   if (!(confidence > 0.0 && confidence < 1.0)) {
-    throw std::invalid_argument("monte_carlo_var: confidence must be in (0, 1)");
+    throw std::invalid_argument(
+        "monte_carlo_var: confidence must be in (0, 1)");
   }
-  Eigen::VectorXd sims = simulate_portfolio_returns(mean, cov, weights,
-                                                    horizon_days, draws, seed);
+  Eigen::VectorXd sims =
+      simulate_portfolio_returns(mean, cov, weights, horizon_days, draws, seed);
   std::vector<double> v(sims.data(), sims.data() + sims.size());
   const double q = empirical_quantile(v, 1.0 - confidence);
   return -q;  // path already covers the horizon; positive loss

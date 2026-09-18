@@ -11,8 +11,7 @@ Portfolio::Portfolio(std::vector<std::string> names, Eigen::VectorXd weights,
       weights_(std::move(weights)),
       notional_(total_notional) {
   if (static_cast<Eigen::Index>(names_.size()) != weights_.size()) {
-    throw std::invalid_argument(
-        "Portfolio: names and weights size mismatch");
+    throw std::invalid_argument("Portfolio: names and weights size mismatch");
   }
   if (weights_.size() == 0) {
     throw std::invalid_argument("Portfolio: empty portfolio");

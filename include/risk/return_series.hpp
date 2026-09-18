@@ -58,12 +58,12 @@ class ReturnSeries {
   double annualization_factor() const { return annualization_factor_; }
 
   // ---- summary statistics --------------------------------------------------
-  double mean() const;                 // arithmetic mean of the returns
-  double variance() const;             // sample variance (unbiased, /(n-1))
-  double stdev() const;                // sqrt(variance)
+  double mean() const;      // arithmetic mean of the returns
+  double variance() const;  // sample variance (unbiased, /(n-1))
+  double stdev() const;     // sqrt(variance)
 
-  double annualized_mean() const;      // mean * factor
-  double annualized_vol() const;       // stdev * sqrt(factor)
+  double annualized_mean() const;  // mean * factor
+  double annualized_vol() const;   // stdev * sqrt(factor)
 
   // Sum of the (log) returns over the whole window. For a Log series this
   // equals ln(P_last / P_first) by additivity. Provided for both types but

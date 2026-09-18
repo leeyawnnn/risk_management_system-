@@ -28,9 +28,10 @@ bool is_psd(const Eigen::MatrixXd& M, double tol = 1e-10);
 Eigen::MatrixXd to_return_matrix(const std::vector<ReturnSeries>& series);
 
 // ---------------------------------------------------------------------------
-// Covariance estimators. Input X is (T x N): rows = observations, cols = assets.
-// All outputs are daily covariances (annualize by multiplying by the factor).
-// Each estimator asserts symmetry + PSD in debug builds before returning.
+// Covariance estimators. Input X is (T x N): rows = observations, cols =
+// assets. All outputs are daily covariances (annualize by multiplying by the
+// factor). Each estimator asserts symmetry + PSD in debug builds before
+// returning.
 // ---------------------------------------------------------------------------
 
 // Unbiased sample covariance: demean columns, divide by (T-1).
@@ -49,8 +50,8 @@ Eigen::MatrixXd ewma_covariance(const Eigen::MatrixXd& X, double lambda = 0.94);
 
 // Result of Ledoit-Wolf shrinkage toward a constant-correlation target.
 struct LedoitWolf {
-  Eigen::MatrixXd cov;   // the shrunk covariance estimate
-  double shrinkage;      // optimal intensity delta* in [0, 1]
+  Eigen::MatrixXd cov;     // the shrunk covariance estimate
+  double shrinkage;        // optimal intensity delta* in [0, 1]
   double avg_correlation;  // r-bar, the constant correlation of the target
 };
 

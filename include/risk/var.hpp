@@ -23,9 +23,9 @@ namespace risk {
 // ---------------------------------------------------------------------------
 // Standard normal helpers
 // ---------------------------------------------------------------------------
-double normal_pdf(double x);          // phi(x), standard normal density
-double normal_cdf(double x);          // Phi(x)
-double normal_ppf(double p);          // Phi^{-1}(p), p in (0,1); z_alpha
+double normal_pdf(double x);  // phi(x), standard normal density
+double normal_cdf(double x);  // Phi(x)
+double normal_ppf(double p);  // Phi^{-1}(p), p in (0,1); z_alpha
 
 // ---------------------------------------------------------------------------
 // Empirical quantile (no interpolation): the k-th order statistic with

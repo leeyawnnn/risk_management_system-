@@ -59,7 +59,8 @@ TEST_CASE("log-return additivity: sum == log of cumulative gross return",
 TEST_CASE("cumulative return agrees across Log and Simple conventions",
           "[return_series]") {
   auto log_rs = ReturnSeries::from_prices(kDates, kPrices, ReturnType::Log);
-  auto simple_rs = ReturnSeries::from_prices(kDates, kPrices, ReturnType::Simple);
+  auto simple_rs =
+      ReturnSeries::from_prices(kDates, kPrices, ReturnType::Simple);
   CHECK_THAT(log_rs.cumulative_return(),
              WithinAbs(simple_rs.cumulative_return(), 1e-12));
   CHECK_THAT(simple_rs.cumulative_return(), WithinAbs(0.03, 1e-12));
@@ -73,7 +74,8 @@ TEST_CASE("annualization factor scales mean and vol correctly",
              WithinRel(rs.stdev() * std::sqrt(252.0), 1e-12));
 }
 
-TEST_CASE("sample variance uses the unbiased (n-1) divisor", "[return_series]") {
+TEST_CASE("sample variance uses the unbiased (n-1) divisor",
+          "[return_series]") {
   auto rs = ReturnSeries::from_prices(kDates, kPrices, ReturnType::Simple);
   const auto& r = rs.returns();
   const double m = r.mean();
@@ -83,10 +85,10 @@ TEST_CASE("sample variance uses the unbiased (n-1) divisor", "[return_series]") 
   CHECK_THAT(rs.variance(), WithinRel(unbiased, 1e-12));
 }
 
-TEST_CASE("CSV loader reproduces the in-memory series", "[return_series][csv]") {
-  auto rs =
-      ReturnSeries::from_csv(data_path("known_prices.csv"), ReturnType::Log,
-                             MissingPolicy::Skip);
+TEST_CASE("CSV loader reproduces the in-memory series",
+          "[return_series][csv]") {
+  auto rs = ReturnSeries::from_csv(data_path("known_prices.csv"),
+                                   ReturnType::Log, MissingPolicy::Skip);
   REQUIRE(rs.size() == 4);
   CHECK_THAT(rs.returns()(0), WithinRel(std::log(1.02), 1e-12));
   CHECK(rs.dates()[0] == "2020-01-03");
@@ -105,9 +107,9 @@ TEST_CASE("missing data: Skip closes the gap", "[return_series][missing]") {
 TEST_CASE("missing data: FillForward carries last price (zero return)",
           "[return_series][missing]") {
   // 100, <carry 100>, 101, 105 -> 3 returns, first is exactly 0.
-  auto rs = ReturnSeries::from_csv(data_path("missing_prices.csv"),
-                                   ReturnType::Simple,
-                                   MissingPolicy::FillForward);
+  auto rs =
+      ReturnSeries::from_csv(data_path("missing_prices.csv"),
+                             ReturnType::Simple, MissingPolicy::FillForward);
   REQUIRE(rs.size() == 3);
   CHECK_THAT(rs.returns()(0), WithinAbs(0.0, 1e-15));
   CHECK_THAT(rs.returns()(1), WithinRel(101.0 / 100.0 - 1.0, 1e-12));
@@ -116,9 +118,8 @@ TEST_CASE("missing data: FillForward carries last price (zero return)",
 
 TEST_CASE("invalid input is rejected loudly", "[return_series][errors]") {
   // Fewer than two prices.
-  CHECK_THROWS_AS(
-      ReturnSeries::from_prices({"d0"}, {100.0}, ReturnType::Log),
-      std::invalid_argument);
+  CHECK_THROWS_AS(ReturnSeries::from_prices({"d0"}, {100.0}, ReturnType::Log),
+                  std::invalid_argument);
   // Non-positive price under a log return.
   CHECK_THROWS_AS(
       ReturnSeries::from_prices({"d0", "d1"}, {100.0, -5.0}, ReturnType::Log),

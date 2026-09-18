@@ -23,7 +23,9 @@ Eigen::VectorXd gaussian_sample(int n, double mu, double sigma,
   return v;
 }
 
-double sample_mean(const Eigen::VectorXd& v) { return v.mean(); }
+double sample_mean(const Eigen::VectorXd& v) {
+  return v.mean();
+}
 double sample_std(const Eigen::VectorXd& v) {
   const double m = v.mean();
   return std::sqrt((v.array() - m).square().sum() / (v.size() - 1));

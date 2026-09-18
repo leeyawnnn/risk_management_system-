@@ -9,8 +9,7 @@ namespace risk {
 
 namespace {
 // Effective shock for one asset: direct asset shock plus factor contributions.
-double effective_shock(const std::string& asset,
-                       const StressScenario& scenario,
+double effective_shock(const std::string& asset, const StressScenario& scenario,
                        const FactorBetas& betas) {
   double s = 0.0;
   auto it = scenario.asset_shocks.find(asset);
@@ -45,8 +44,8 @@ StressResult apply_scenario(const Portfolio& portfolio,
 
   double pct = 0.0;
   for (Eigen::Index i = 0; i < n; ++i) {
-    const double s = effective_shock(names[static_cast<std::size_t>(i)],
-                                     scenario, betas);
+    const double s =
+        effective_shock(names[static_cast<std::size_t>(i)], scenario, betas);
     res.asset_shock(i) = s;
     // First-order P&L: position value * shock. weight_i * notional = position.
     res.asset_pnl(i) = notional * w(i) * s;
@@ -62,7 +61,8 @@ std::vector<StressResult> apply_scenarios(
     const FactorBetas& betas) {
   std::vector<StressResult> out;
   out.reserve(scenarios.size());
-  for (const auto& sc : scenarios) out.push_back(apply_scenario(portfolio, sc, betas));
+  for (const auto& sc : scenarios)
+    out.push_back(apply_scenario(portfolio, sc, betas));
   return out;
 }
 
@@ -93,7 +93,8 @@ std::vector<StressScenario> load_scenarios(const std::string& path) {
         sc.factor_shocks[k] = v.get<double>();
     }
     if (sc.name.empty()) {
-      throw std::invalid_argument("load_scenarios: a scenario is missing \"name\"");
+      throw std::invalid_argument(
+          "load_scenarios: a scenario is missing \"name\"");
     }
     scenarios.push_back(std::move(sc));
   }

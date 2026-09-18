@@ -94,9 +94,7 @@ TEST_CASE("portfolio return series is the weighted sum of asset returns",
   Portfolio p({"X", "Y"}, w);
 
   Eigen::MatrixXd X(3, 2);
-  X << 0.01, -0.02,
-       0.00, 0.03,
-       -0.01, 0.01;
+  X << 0.01, -0.02, 0.00, 0.03, -0.01, 0.01;
   Eigen::VectorXd r = p.return_series(X);
 
   REQUIRE(r.size() == 3);

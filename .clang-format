@@ -1,0 +1,12 @@
+# Google style with a 80-column limit: matches the existing source, and keeps
+# diffs narrow enough to review side by side.
+BasedOnStyle: Google
+Language: Cpp
+Standard: c++20
+ColumnLimit: 80
+IndentWidth: 2
+AccessModifierOffset: -1
+DerivePointerAlignment: false
+PointerAlignment: Left
+IncludeBlocks: Preserve
+AllowShortFunctionsOnASingleLine: Inline

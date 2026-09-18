@@ -74,7 +74,8 @@ Eigen::VectorXd ewma_weights(Eigen::Index T, double lambda) {
 Eigen::MatrixXd ewma_covariance(const Eigen::MatrixXd& X, double lambda) {
   const Eigen::Index T = X.rows();
   if (T < 2) {
-    throw std::invalid_argument("ewma_covariance: need at least 2 observations");
+    throw std::invalid_argument(
+        "ewma_covariance: need at least 2 observations");
   }
   const Eigen::VectorXd w = ewma_weights(T, lambda);
 
@@ -104,11 +105,11 @@ LedoitWolf ledoit_wolf_covariance(const Eigen::MatrixXd& X) {
 
   // Demeaned data and the MLE (1/T) sample covariance used in the derivation.
   const Eigen::RowVectorXd mean = X.colwise().mean();
-  const Eigen::MatrixXd Xc = X.rowwise() - mean;     // T x N
+  const Eigen::MatrixXd Xc = X.rowwise() - mean;         // T x N
   const Eigen::MatrixXd S = (Xc.transpose() * Xc) / Td;  // N x N
 
-  const Eigen::VectorXd var = S.diagonal();          // s_ii
-  const Eigen::VectorXd sd = var.cwiseSqrt();        // sqrt(s_ii)
+  const Eigen::VectorXd var = S.diagonal();    // s_ii
+  const Eigen::VectorXd sd = var.cwiseSqrt();  // sqrt(s_ii)
 
   // Average sample correlation r-bar over the off-diagonals (i < j).
   double sum_corr = 0.0;
@@ -158,8 +159,8 @@ LedoitWolf ledoit_wolf_covariance(const Eigen::MatrixXd& X) {
       }
       theta_ii /= Td;
       theta_jj /= Td;
-      rho_hat += rbar * 0.5 *
-                 (sd(j) / sd(i) * theta_ii + sd(i) / sd(j) * theta_jj);
+      rho_hat +=
+          rbar * 0.5 * (sd(j) / sd(i) * theta_ii + sd(i) / sd(j) * theta_jj);
     }
   }
 

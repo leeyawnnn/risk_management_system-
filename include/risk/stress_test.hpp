@@ -21,7 +21,7 @@ using FactorBetas = std::map<std::string, std::map<std::string, double>>;
 //     s_i = asset_shocks[i] + sum_f betas[i][f] * factor_shocks[f]
 struct StressScenario {
   std::string name;
-  std::string type;         // "historical" | "synthetic" (informational)
+  std::string type;  // "historical" | "synthetic" (informational)
   std::string description;
   std::map<std::string, double> asset_shocks;
   std::map<std::string, double> factor_shocks;
@@ -30,11 +30,11 @@ struct StressScenario {
 // Outcome of applying one scenario to a portfolio.
 struct StressResult {
   std::string name;
-  double pct_pnl = 0.0;     // P&L as a fraction of notional
-  double dollar_pnl = 0.0;  // pct_pnl * notional
+  double pct_pnl = 0.0;                  // P&L as a fraction of notional
+  double dollar_pnl = 0.0;               // pct_pnl * notional
   std::vector<std::string> asset_names;  // portfolio order
   Eigen::VectorXd asset_shock;           // effective per-asset shock
-  Eigen::VectorXd asset_pnl;             // per-asset dollar P&L (sums to dollar_pnl)
+  Eigen::VectorXd asset_pnl;  // per-asset dollar P&L (sums to dollar_pnl)
 };
 
 // Apply a single scenario. `betas` is only needed for factor_shocks; pass an
@@ -53,7 +53,8 @@ std::vector<StressResult> apply_scenarios(
 // Load scenarios from a JSON file with a top-level "scenarios" array.
 std::vector<StressScenario> load_scenarios(const std::string& path);
 
-// Load factor betas from a JSON file: { "ASSET": { "factor": beta, ... }, ... }.
+// Load factor betas from a JSON file: { "ASSET": { "factor": beta, ... }, ...
+// }.
 FactorBetas load_factor_betas(const std::string& path);
 
 }  // namespace risk
