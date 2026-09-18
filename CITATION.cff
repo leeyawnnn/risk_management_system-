@@ -1,0 +1,68 @@
+cff-version: 1.2.0
+title: risk-management-engine
+message: >-
+  If you use this software or its results, please cite it using the
+  metadata below.
+type: software
+authors:
+  - given-names: Lyonn
+    family-names: Lie
+    alias: leeyawnnn
+repository-code: "https://github.com/leeyawnnn/risk-management-engine"
+abstract: >-
+  A multi-asset portfolio risk engine in C++20 computing Value at Risk
+  by parametric, historical and Monte Carlo methods, Expected Shortfall,
+  marginal and component risk attribution, factor risk decomposition,
+  forward and reverse stress testing, and the regulatory backtests that
+  assess calibration: Kupiec proportion-of-failures, Christoffersen
+  independence and conditional coverage, Basel traffic-light zones, and
+  the Acerbi-Szekely Expected Shortfall tests. The worked example uses
+  real daily series from FRED.
+keywords:
+  - risk management
+  - value at risk
+  - expected shortfall
+  - quantitative finance
+  - portfolio analytics
+  - backtesting
+  - cpp
+license: Apache-2.0
+version: 1.0.0
+date-released: "2026-09-18"
+references:
+  - type: article
+    authors:
+      - given-names: Olivier
+        family-names: Ledoit
+      - given-names: Michael
+        family-names: Wolf
+    title: "Honey, I Shrunk the Sample Covariance Matrix"
+    journal: Journal of Portfolio Management
+    volume: 30
+    issue: 4
+    start: 110
+    end: 119
+    year: 2004
+  - type: article
+    authors:
+      - given-names: Peter
+        family-names: Christoffersen
+    title: "Evaluating Interval Forecasts"
+    journal: International Economic Review
+    volume: 39
+    issue: 4
+    start: 841
+    end: 862
+    year: 1998
+  - type: article
+    authors:
+      - given-names: Paul
+        family-names: Kupiec
+    title: >-
+      Techniques for Verifying the Accuracy of Risk Measurement Models
+    journal: Journal of Derivatives
+    volume: 3
+    issue: 2
+    start: 73
+    end: 84
+    year: 1995
