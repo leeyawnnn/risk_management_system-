@@ -1,14 +1,32 @@
 # Build artifacts
 build/
+build-*/
 cmake-build-*/
 out/
+_deps/
+CMakeCache.txt
+CMakeFiles/
+compile_commands.json
 
-# CLI output (generated reports)
-output/*.json
-output/*.md
+# Runtime output of the CLI. The committed worked example lives in reports/.
+output/
 
-# Editor / OS
-.DS_Store
+# Language-server / editor indexes
+.cache/
+.ccls-cache/
+.clangd/
 .vscode/
 .idea/
-compile_commands.json
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# OS
+.DS_Store

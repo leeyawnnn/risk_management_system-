@@ -1,0 +1,14 @@
+# Keep GitHub's language stats honest: this is a C++ project.
+*.svg            linguist-generated=true
+reports/**       linguist-generated=true
+data/**          linguist-vendored=true
+tests/data/**    linguist-vendored=true
+
+# Normalise line endings for text we own.
+*.cpp   text eol=lf
+*.hpp   text eol=lf
+*.py    text eol=lf
+*.md    text eol=lf
+*.json  text eol=lf
+*.yml   text eol=lf
+*.csv   text eol=lf
