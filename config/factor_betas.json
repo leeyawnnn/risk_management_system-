@@ -1,15 +1,266 @@
 {
-  "SPY":  { "equity": 1.00, "credit_spread": -0.30, "usd": -0.30 },
-  "QQQ":  { "equity": 1.10, "credit_spread": -0.30, "usd": -0.30 },
-  "EFA":  { "equity": 0.90, "credit_spread": -0.40, "usd": -0.60 },
-  "AAPL": { "equity": 1.15, "credit_spread": -0.20, "usd": -0.20 },
-  "MSFT": { "equity": 1.05, "credit_spread": -0.20, "usd": -0.20 },
-  "JPM":  { "equity": 1.10, "credit_spread": -0.80, "usd": -0.20 },
-  "XOM":  { "equity": 0.90, "credit_spread": -0.50, "usd": -0.30 },
-  "TLT":  { "equity": -0.20, "credit_spread": 0.00, "usd": 0.10 },
-  "IEF":  { "equity": -0.10, "credit_spread": 0.00, "usd": 0.05 },
-  "LQD":  { "equity": 0.10, "credit_spread": -2.00, "usd": 0.00 },
-  "HYG":  { "equity": 0.30, "credit_spread": -4.00, "usd": -0.10 },
-  "GLD":  { "equity": 0.10, "credit_spread": 0.00, "usd": -0.60 },
-  "USO":  { "equity": 0.50, "credit_spread": -0.30, "usd": -0.40 }
+  "_meta": {
+    "generated_by": "scripts/estimate_factor_betas.py",
+    "git_commit": "63b80a6a73fd9e31ecb62f75635c5614dedeaf84",
+    "generated_utc": "2026-09-18T06:15:03+00:00",
+    "estimator": "OLS with HC1 robust standard errors",
+    "sample_start": "2021-09-17",
+    "sample_end": "2026-09-11",
+    "observations": 1238,
+    "factors": {
+      "equity": "log return of SP500",
+      "rates_level": "average daily change in the 2y/10y/30y CMT yields, decimal",
+      "rates_slope": "daily change in (30y - 2y) CMT, decimal",
+      "credit_spread": "daily change in the Baa yield over the 10y CMT, decimal",
+      "usd": "log return of the broad nominal USD index",
+      "oil": "log return of WTI spot"
+    },
+    "note": "equity, usd and oil are log returns of SP500, DTWEXBGS and DCOILWTICO, which are also book constituents. Those three instruments therefore regress on themselves; their unit beta and unit R-squared are definitional and are flagged self_referential in diagnostics."
+  },
+  "betas": {
+    "COMD_WTI": {
+      "equity": 7.829985431356662e-11,
+      "rates_level": 9.492167731243167e-11,
+      "rates_slope": -1.698278506629537e-09,
+      "credit_spread": 2.8218345889162345e-09,
+      "usd": 1.9970027031749498e-10,
+      "oil": 0.9999999999700491
+    },
+    "CREDIT_AAA": {
+      "equity": 0.03395662181081965,
+      "rates_level": -13.021923949928874,
+      "rates_slope": -3.4146108670663295,
+      "credit_spread": -7.45207125083014,
+      "usd": -0.064237824435957,
+      "oil": -0.0020157360150748105
+    },
+    "CREDIT_BAA": {
+      "equity": 0.009330577376335976,
+      "rates_level": -12.471441515084614,
+      "rates_slope": -2.322965233437634,
+      "credit_spread": -9.656481162814655,
+      "usd": -0.056018650466633686,
+      "oil": 0.0015849966664781708
+    },
+    "EQ_US_BLUE": {
+      "equity": 0.7967759975360451,
+      "rates_level": -0.11367689692583428,
+      "rates_slope": -0.008054713564933366,
+      "credit_spread": -0.5075466291489503,
+      "usd": -0.02971300019231282,
+      "oil": -0.011018753117766912
+    },
+    "EQ_US_LARGE": {
+      "equity": 1.0000000000810474,
+      "rates_level": 1.0050797105669305e-09,
+      "rates_slope": 9.887714913066266e-10,
+      "credit_spread": 1.330248567980818e-09,
+      "usd": 5.682790977079831e-10,
+      "oil": 1.3757668053754811e-11
+    },
+    "EQ_US_TECH": {
+      "equity": 1.3060889649359977,
+      "rates_level": 0.16438554540337583,
+      "rates_slope": 0.29158683654526435,
+      "credit_spread": 0.685145018491194,
+      "usd": 0.08765437200653066,
+      "oil": -0.018674819779066144
+    },
+    "FX_EURUSD": {
+      "equity": -0.021629422902724172,
+      "rates_level": 0.187182213615951,
+      "rates_slope": 0.1284188621805912,
+      "credit_spread": 0.43293866186423624,
+      "usd": -1.3273970016085075,
+      "oil": -0.007793409057613721
+    },
+    "FX_USD_BROAD": {
+      "equity": 8.729515157925791e-11,
+      "rates_level": -7.128984360881304e-10,
+      "rates_slope": -2.4850734638781843e-09,
+      "credit_spread": 2.589720294052766e-09,
+      "usd": 0.9999999996960269,
+      "oil": -2.0813682988612948e-11
+    },
+    "UST_10Y": {
+      "equity": 0.008047041365995324,
+      "rates_level": -8.64738630538765,
+      "rates_slope": -1.6148753098397306,
+      "credit_spread": 1.6740437298668016,
+      "usd": -0.03529561720278359,
+      "oil": 0.0011898170209891047
+    },
+    "UST_2Y": {
+      "equity": -0.0010723498444873349,
+      "rates_level": -1.8686988566545668,
+      "rates_slope": 1.146237111521315,
+      "credit_spread": -0.20195886349417808,
+      "usd": 0.005201119799186437,
+      "oil": -0.00013060852089430896
+    },
+    "UST_30Y": {
+      "equity": -0.01884189170695317,
+      "rates_level": -17.157930430684385,
+      "rates_slope": -7.064722313920506,
+      "credit_spread": -1.529747494730076,
+      "usd": 0.06412480522218576,
+      "oil": 0.0018427819324378539
+    }
+  },
+  "diagnostics": {
+    "COMD_WTI": {
+      "alpha_annual": 1.1737037556844583e-10,
+      "r_squared": 1.0,
+      "residual_vol_annual": 4.724146370703185e-10,
+      "t_stats": {
+        "equity": 0.9624179734829557,
+        "rates_level": 0.05464276626875775,
+        "rates_slope": -0.9660865925174742,
+        "credit_spread": 0.7683391041433493,
+        "usd": 0.6902998482985797,
+        "oil": 30668306233.793926
+      },
+      "self_referential": "oil"
+    },
+    "CREDIT_AAA": {
+      "alpha_annual": 0.034016605745052275,
+      "r_squared": 0.8877546977880837,
+      "residual_vol_annual": 0.03979496156120828,
+      "t_stats": {
+        "equity": 4.01310118377068,
+        "rates_level": -64.68246805700568,
+        "rates_slope": -17.666499225388915,
+        "credit_spread": -15.597382822624644,
+        "usd": -2.120203029254375,
+        "oil": -0.573760091727601
+      },
+      "self_referential": null
+    },
+    "CREDIT_BAA": {
+      "alpha_annual": 0.05353753647214364,
+      "r_squared": 0.9756341171413309,
+      "residual_vol_annual": 0.01647470039072902,
+      "t_stats": {
+        "equity": 2.1430438562635845,
+        "rates_level": -117.90703898884207,
+        "rates_slope": -22.64699571661397,
+        "credit_spread": -39.547703828735486,
+        "usd": -4.035152052094732,
+        "oil": 0.9496097382632135
+      },
+      "self_referential": null
+    },
+    "EQ_US_BLUE": {
+      "alpha_annual": -0.001867458478681049,
+      "r_squared": 0.8361136302381198,
+      "residual_vol_annual": 0.06077026630269442,
+      "t_stats": {
+        "equity": 66.59148631490514,
+        "rates_level": -0.47283288891826536,
+        "rates_slope": -0.03632097052953075,
+        "credit_spread": -1.031695839642525,
+        "usd": -0.744305434219607,
+        "oil": -2.2753127744585218
+      },
+      "self_referential": null
+    },
+    "EQ_US_LARGE": {
+      "alpha_annual": 7.956400602771893e-11,
+      "r_squared": 1.0,
+      "residual_vol_annual": 4.5237244045737486e-10,
+      "t_stats": {
+        "equity": 11972894617.458471,
+        "rates_level": 0.5486818130557883,
+        "rates_slope": 0.5737831838364372,
+        "credit_spread": 0.36353269785242254,
+        "usd": 2.0201128687818577,
+        "oil": 0.4147084049757417
+      },
+      "self_referential": "equity"
+    },
+    "EQ_US_TECH": {
+      "alpha_annual": -0.012680811537397432,
+      "r_squared": 0.9068942321479498,
+      "residual_vol_annual": 0.07102773315728232,
+      "t_stats": {
+        "equity": 86.89052660886024,
+        "rates_level": 0.5643305222639454,
+        "rates_slope": 1.0076120554623242,
+        "credit_spread": 1.046672088754042,
+        "usd": 1.7280641784786475,
+        "oil": -3.281674600101635
+      },
+      "self_referential": null
+    },
+    "FX_EURUSD": {
+      "alpha_annual": 0.010524597169990059,
+      "r_squared": 0.7780471391555189,
+      "residual_vol_annual": 0.03583626926032962,
+      "t_stats": {
+        "equity": -1.9519235372770067,
+        "rates_level": 1.0714988788243036,
+        "rates_slope": 0.7523230340241222,
+        "credit_spread": 1.1707565800022812,
+        "usd": -49.215658622370164,
+        "oil": -2.445141923787072
+      },
+      "self_referential": null
+    },
+    "FX_USD_BROAD": {
+      "alpha_annual": -3.425330228361027e-10,
+      "r_squared": 0.9999999999999999,
+      "residual_vol_annual": 4.598087835020059e-10,
+      "t_stats": {
+        "equity": 1.0596927200903337,
+        "rates_level": -0.39624876146726207,
+        "rates_slope": -1.4473943408340357,
+        "credit_spread": 0.7200018455517032,
+        "usd": 3309832711.7961855,
+        "oil": -0.6670535238780632
+      },
+      "self_referential": "usd"
+    },
+    "UST_10Y": {
+      "alpha_annual": 0.038239048881916295,
+      "r_squared": 0.9829039509925677,
+      "residual_vol_annual": 0.010770878964326226,
+      "t_stats": {
+        "equity": 2.6896718444418424,
+        "rates_level": -137.53440131277733,
+        "rates_slope": -23.999386947967192,
+        "credit_spread": 11.40743823104224,
+        "usd": -3.909523228935701,
+        "oil": 1.1049310955923728
+      },
+      "self_referential": null
+    },
+    "UST_2Y": {
+      "alpha_annual": 0.03626866644835917,
+      "r_squared": 0.9959208501407535,
+      "residual_vol_annual": 0.00135847689026013,
+      "t_stats": {
+        "equity": -2.8616057453509014,
+        "rates_level": -259.5703098927556,
+        "rates_slope": 150.15762354762154,
+        "credit_spread": -11.869597704775448,
+        "usd": 4.827000417248914,
+        "oil": -1.1044829771223321
+      },
+      "self_referential": null
+    },
+    "UST_30Y": {
+      "alpha_annual": 0.027703220623357346,
+      "r_squared": 0.9853467867644472,
+      "residual_vol_annual": 0.0188521892358254,
+      "t_stats": {
+        "equity": -4.163203899816391,
+        "rates_level": -170.338080400934,
+        "rates_slope": -77.31057354708202,
+        "credit_spread": -7.637736137317986,
+        "usd": 5.469026740720844,
+        "oil": 1.1556209474400525
+      },
+      "self_referential": null
+    }
+  }
 }

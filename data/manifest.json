@@ -1,7 +1,7 @@
 {
   "generated_by": "scripts/fetch_data.py",
-  "git_commit": "5a1c58638c5c4f2240d24c8977478a7c142f5877",
-  "retrieved_utc": "2026-09-18T06:13:00+00:00",
+  "git_commit": "63b80a6a73fd9e31ecb62f75635c5614dedeaf84",
+  "retrieved_utc": "2026-09-18T06:15:02+00:00",
   "as_of": "2026-09-11",
   "requested_through": "2026-09-17",
   "sample_start": "2021-09-17",
@@ -144,6 +144,14 @@
       "raw_observations": 1246
     }
   ],
+  "factors": {
+    "equity": "log return of SP500",
+    "rates_level": "average daily change in the 2y/10y/30y CMT yields, decimal",
+    "rates_slope": "daily change in (30y - 2y) CMT, decimal",
+    "credit_spread": "daily change in the Baa yield over the 10y CMT, decimal",
+    "usd": "log return of the broad nominal USD index",
+    "oil": "log return of WTI spot"
+  },
   "dropped_dates": [
     {
       "date": "2021-10-11",

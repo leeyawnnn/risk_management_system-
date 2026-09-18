@@ -43,6 +43,7 @@ FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv"
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 OUT_DIR = REPO / "data" / "returns"
+FACTOR_FILE = REPO / "data" / "factors.csv"
 MANIFEST = REPO / "data" / "manifest.json"
 
 # Trading days per year. Used only to convert one calendar step into a fraction
@@ -224,6 +225,56 @@ def par_bond_total_return(y_prev: float, y_now: float, maturity_years: float) ->
     return dirty / 100.0 - 1.0
 
 
+# Observable risk factors, built from the same FRED pulls. Equity, USD and oil
+# are log returns of a series that is also a book constituent, so those three
+# betas are close to definitional for the constituent itself; the informative
+# numbers are the cross-asset loadings. The rate and spread factors are yield
+# changes in decimal (0.0001 = 1bp), not returns.
+FACTOR_DEFS = {
+    "equity": "log return of SP500",
+    "rates_level": "average daily change in the 2y/10y/30y CMT yields, decimal",
+    "rates_slope": "daily change in (30y - 2y) CMT, decimal",
+    "credit_spread": "daily change in the Baa yield over the 10y CMT, decimal",
+    "usd": "log return of the broad nominal USD index",
+    "oil": "log return of WTI spot",
+}
+
+
+def build_factors(
+    raw: dict[str, dict[str, float]], dates: list[str]
+) -> dict[str, list[float]]:
+    """Daily realisations of each observable factor over the aligned calendar."""
+    import math
+
+    def logret(code: str) -> list[float]:
+        obs = raw[code]
+        return [
+            math.log(obs[b] / obs[a]) for a, b in zip(dates[:-1], dates[1:], strict=True)
+        ]
+
+    def dyield(code: str) -> list[float]:
+        obs = raw[code]
+        return [
+            (obs[b] - obs[a]) / 100.0
+            for a, b in zip(dates[:-1], dates[1:], strict=True)
+        ]
+
+    d2, d10, d30 = dyield("UST_2Y"), dyield("UST_10Y"), dyield("UST_30Y")
+    baa = dyield("CREDIT_BAA")
+    return {
+        "equity": logret("EQ_US_LARGE"),
+        "rates_level": [(a + b + c) / 3.0 for a, b, c in zip(d2, d10, d30, strict=True)],
+        "rates_slope": [c - a for a, c in zip(d2, d30, strict=True)],
+        # Baa over the 10y Treasury: the standard corporate spread, and the
+        # definition behind FRED's own BAA10Y. Defining it as Baa - Aaa instead
+        # makes the Aaa leg's own yield change part of the factor, which hands
+        # the Aaa instrument a spurious positive credit beta.
+        "credit_spread": [b - t for t, b in zip(d10, baa, strict=True)],
+        "usd": logret("FX_USD_BROAD"),
+        "oil": logret("COMD_WTI"),
+    }
+
+
 def fetch_series(series_id: str, start: str, end: str) -> tuple[dict[str, float], str]:
     """Download one FRED series. Returns {date: value} and the payload SHA256.
 
@@ -343,6 +394,14 @@ def main() -> int:
                 w.writerow([date, f"{level:.6f}"])
         written.append(inst.code)
 
+    factors = build_factors(raw, common)
+    with FACTOR_FILE.open("w", newline="") as fh:
+        w = csv.writer(fh, lineterminator="\n")
+        names = list(FACTOR_DEFS)
+        w.writerow(["date", *names])
+        for i, date in enumerate(common[1:]):
+            w.writerow([date, *(f"{factors[n][i]:.10f}" for n in names)])
+
     manifest = {
         "generated_by": "scripts/fetch_data.py",
         "git_commit": git_sha(),
@@ -370,13 +429,13 @@ def main() -> int:
             }
             for i in UNIVERSE
         ],
-        "dropped_dates": [
-            {"date": d, "missing_in": codes} for d, codes in dropped
-        ],
+        "factors": FACTOR_DEFS,
+        "dropped_dates": [{"date": d, "missing_in": codes} for d, codes in dropped],
     }
     MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n")
 
     print(f"wrote {len(written)} instruments to {OUT_DIR}")
+    print(f"wrote {FACTOR_FILE}")
     print(f"wrote {MANIFEST}")
     return 0
 

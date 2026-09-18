@@ -1,55 +1,392 @@
 {
+  "_meta": {
+    "generated_by": "scripts/build_stress_scenarios.py",
+    "git_commit": "63b80a6a73fd9e31ecb62f75635c5614dedeaf84",
+    "generated_utc": "2026-09-18T06:15:26+00:00",
+    "source": "FRED long-history daily series",
+    "series_used": {
+      "NASDAQCOM": "Nasdaq Composite index level",
+      "DGS10": "10-year Treasury constant maturity, percent",
+      "DBAA": "Moody's seasoned Baa corporate yield, percent",
+      "DCOILWTICO": "WTI spot, USD per barrel",
+      "DTWEXM": "Nominal major-currencies USD index (discontinued 2019-12-31)",
+      "DTWEXBGS": "Nominal broad USD index (from 2006)"
+    },
+    "equity_proxy_note": "NASDAQCOM is the equity proxy because S&P 500 and DJIA on FRED are limited to a rolling ten-year window."
+  },
   "scenarios": [
-    {
-      "name": "2008 GFC",
-      "type": "historical",
-      "description": "Global Financial Crisis, Sep-Nov 2008. Equities and high-yield crater, banks worst hit, oil collapses; Treasuries and gold rally on flight-to-quality.",
-      "asset_shocks": {
-        "SPY": -0.30, "QQQ": -0.32, "EFA": -0.35, "AAPL": -0.33, "MSFT": -0.28,
-        "JPM": -0.45, "XOM": -0.25,
-        "TLT": 0.15, "IEF": 0.08, "LQD": -0.05, "HYG": -0.28,
-        "GLD": 0.05, "USO": -0.55
-      }
-    },
-    {
-      "name": "2020 COVID Crash",
-      "type": "historical",
-      "description": "COVID-19 selloff, Feb 19 - Mar 23 2020. Sharp broad equity drawdown, energy collapses, high-yield gaps wider; Treasuries up, gold sold early for liquidity.",
-      "asset_shocks": {
-        "SPY": -0.34, "QQQ": -0.28, "EFA": -0.33, "AAPL": -0.30, "MSFT": -0.28,
-        "JPM": -0.42, "XOM": -0.55,
-        "TLT": 0.12, "IEF": 0.06, "LQD": -0.08, "HYG": -0.20,
-        "GLD": -0.03, "USO": -0.65
-      }
-    },
     {
       "name": "1987 Black Monday",
       "type": "historical",
-      "description": "Oct 19 1987 single-day crash. S&P 500 fell ~20.5% in one session; broad equity shock, modest bond rally.",
-      "asset_shocks": {
-        "SPY": -0.205, "QQQ": -0.21, "EFA": -0.18, "AAPL": -0.22, "MSFT": -0.20,
-        "JPM": -0.23, "XOM": -0.18,
-        "TLT": 0.05, "IEF": 0.03, "LQD": 0.01, "HYG": -0.08,
-        "GLD": 0.02, "USO": -0.10
+      "description": "The single-session crash of 19 October 1987.",
+      "window": {
+        "start": "1987-10-16",
+        "end": "1987-10-19"
+      },
+      "factor_shocks": {
+        "equity": -0.12047844262333,
+        "rates_level": -0.0008000000000000007,
+        "oil": -0.02198989156517982,
+        "usd": -0.007152058618380169,
+        "credit_spread": 0.0029999999999999892
+      },
+      "provenance": {
+        "equity": {
+          "fred_series": "NASDAQCOM",
+          "from_date": "1987-10-16",
+          "from_level": 406.33,
+          "to_date": "1987-10-19",
+          "to_level": 360.21,
+          "move": -0.12047844262333
+        },
+        "rates_level": {
+          "fred_series": "DGS10",
+          "from_date": "1987-10-16",
+          "from_level": 10.23,
+          "to_date": "1987-10-19",
+          "to_level": 10.15,
+          "move": -0.0008000000000000007
+        },
+        "oil": {
+          "fred_series": "DCOILWTICO",
+          "from_date": "1987-10-16",
+          "from_level": 20.23,
+          "to_date": "1987-10-19",
+          "to_level": 19.79,
+          "move": -0.02198989156517982
+        },
+        "usd": {
+          "fred_series": "DTWEXM",
+          "from_date": "1987-10-16",
+          "from_level": 96.0634,
+          "to_date": "1987-10-19",
+          "to_level": 95.3788,
+          "move": -0.007152058618380169
+        },
+        "credit_spread": {
+          "fred_series": "DBAA minus DGS10",
+          "from_date": "1987-10-16/1987-10-16",
+          "from_level": 1.59,
+          "to_date": "1987-10-19/1987-10-19",
+          "to_level": 1.89,
+          "move": 0.0029999999999999892
+        }
+      },
+      "caveat": "The equity shock is the Nasdaq Composite's -11.35% close. The S&P 500 fell 20.47% that session; Nasdaq quotes went stale as market makers stopped answering. This scenario understates a 1987-style equity shock by roughly half."
+    },
+    {
+      "name": "1998 Russia / LTCM",
+      "type": "historical",
+      "description": "Russia's default on 17 August 1998 through the flight-to-quality peak that preceded the LTCM recapitalisation.",
+      "window": {
+        "start": "1998-08-17",
+        "end": "1998-10-08"
+      },
+      "factor_shocks": {
+        "equity": -0.24772203651491523,
+        "rates_level": -0.008400000000000008,
+        "oil": 0.0942126354493971,
+        "usd": -0.08876913465262545,
+        "credit_spread": 0.00910000000000001
+      },
+      "provenance": {
+        "equity": {
+          "fred_series": "NASDAQCOM",
+          "from_date": "1998-08-17",
+          "from_level": 1818.04,
+          "to_date": "1998-10-08",
+          "to_level": 1419.12,
+          "move": -0.24772203651491523
+        },
+        "rates_level": {
+          "fred_series": "DGS10",
+          "from_date": "1998-08-17",
+          "from_level": 5.4,
+          "to_date": "1998-10-08",
+          "to_level": 4.56,
+          "move": -0.008400000000000008
+        },
+        "oil": {
+          "fred_series": "DCOILWTICO",
+          "from_date": "1998-08-17",
+          "from_level": 13.26,
+          "to_date": "1998-10-08",
+          "to_level": 14.57,
+          "move": 0.0942126354493971
+        },
+        "usd": {
+          "fred_series": "DTWEXM",
+          "from_date": "1998-08-17",
+          "from_level": 102.8711,
+          "to_date": "1998-10-08",
+          "to_level": 94.1329,
+          "move": -0.08876913465262545
+        },
+        "credit_spread": {
+          "fred_series": "DBAA minus DGS10",
+          "from_date": "1998-08-17/1998-08-17",
+          "from_level": 1.74,
+          "to_date": "1998-10-08/1998-10-08",
+          "to_level": 2.65,
+          "move": 0.00910000000000001
+        }
       }
     },
     {
-      "name": "Equity -20%",
-      "type": "synthetic",
-      "description": "Broad equity index down 20%. Applied via the equity factor beta of each asset.",
-      "factor_shocks": { "equity": -0.20 }
+      "name": "2008 Lehman",
+      "type": "historical",
+      "description": "The last session before Lehman Brothers filed, through the November 2008 equity and credit trough.",
+      "window": {
+        "start": "2008-09-12",
+        "end": "2008-11-20"
+      },
+      "factor_shocks": {
+        "equity": -0.5412385881974922,
+        "rates_level": -0.006400000000000001,
+        "oil": -0.7280408719120741,
+        "usd": 0.12136513627797844,
+        "credit_spread": 0.024900000000000002
+      },
+      "provenance": {
+        "equity": {
+          "fred_series": "NASDAQCOM",
+          "from_date": "2008-09-12",
+          "from_level": 2261.27,
+          "to_date": "2008-11-20",
+          "to_level": 1316.12,
+          "move": -0.5412385881974922
+        },
+        "rates_level": {
+          "fred_series": "DGS10",
+          "from_date": "2008-09-12",
+          "from_level": 3.74,
+          "to_date": "2008-11-20",
+          "to_level": 3.1,
+          "move": -0.006400000000000001
+        },
+        "oil": {
+          "fred_series": "DCOILWTICO",
+          "from_date": "2008-09-12",
+          "from_level": 101.19,
+          "to_date": "2008-11-20",
+          "to_level": 48.86,
+          "move": -0.7280408719120741
+        },
+        "usd": {
+          "fred_series": "DTWEXBGS",
+          "from_date": "2008-09-12",
+          "from_level": 91.4706,
+          "to_date": "2008-11-20",
+          "to_level": 103.2737,
+          "move": 0.12136513627797844
+        },
+        "credit_spread": {
+          "fred_series": "DBAA minus DGS10",
+          "from_date": "2008-09-12/2008-09-12",
+          "from_level": 3.43,
+          "to_date": "2008-11-20/2008-11-20",
+          "to_level": 5.92,
+          "move": 0.024900000000000002
+        }
+      }
     },
     {
-      "name": "Credit Spreads +200bps",
-      "type": "synthetic",
-      "description": "Credit spreads widen 200bps (0.02). Applied via each asset's credit_spread beta; hits LQD and especially HYG.",
-      "factor_shocks": { "credit_spread": 0.02 }
+      "name": "2020 COVID crash",
+      "type": "historical",
+      "description": "The 2020 equity peak through the 23 March trough.",
+      "window": {
+        "start": "2020-02-19",
+        "end": "2020-03-23"
+      },
+      "factor_shocks": {
+        "equity": -0.35832880747557494,
+        "rates_level": -0.008,
+        "oil": -0.8263838448013312,
+        "usd": 0.07696633743276586,
+        "credit_spread": 0.022600000000000006
+      },
+      "provenance": {
+        "equity": {
+          "fred_series": "NASDAQCOM",
+          "from_date": "2020-02-19",
+          "from_level": 9817.18,
+          "to_date": "2020-03-23",
+          "to_level": 6860.67,
+          "move": -0.35832880747557494
+        },
+        "rates_level": {
+          "fred_series": "DGS10",
+          "from_date": "2020-02-19",
+          "from_level": 1.56,
+          "to_date": "2020-03-23",
+          "to_level": 0.76,
+          "move": -0.008
+        },
+        "oil": {
+          "fred_series": "DCOILWTICO",
+          "from_date": "2020-02-19",
+          "from_level": 53.31,
+          "to_date": "2020-03-23",
+          "to_level": 23.33,
+          "move": -0.8263838448013312
+        },
+        "usd": {
+          "fred_series": "DTWEXBGS",
+          "from_date": "2020-02-19",
+          "from_level": 116.7829,
+          "to_date": "2020-03-23",
+          "to_level": 126.1262,
+          "move": 0.07696633743276586
+        },
+        "credit_spread": {
+          "fred_series": "DBAA minus DGS10",
+          "from_date": "2020-02-19/2020-02-19",
+          "from_level": 2.05,
+          "to_date": "2020-03-23/2020-03-23",
+          "to_level": 4.31,
+          "move": 0.022600000000000006
+        }
+      }
     },
     {
-      "name": "USD +10%",
-      "type": "synthetic",
-      "description": "Trade-weighted USD strengthens 10%. Applied via each asset's usd beta (gold, intl equity and oil fall; Treasuries little changed).",
-      "factor_shocks": { "usd": 0.10 }
+      "name": "2022 rates repricing",
+      "type": "historical",
+      "description": "The 2022 tightening cycle, from the first session of the year to the peak in long-end yields.",
+      "window": {
+        "start": "2022-01-03",
+        "end": "2022-10-24"
+      },
+      "factor_shocks": {
+        "equity": -0.3685059535700576,
+        "rates_level": 0.0262,
+        "oil": 0.12513991981446876,
+        "usd": 0.10377586381297668,
+        "credit_spread": 0.005199999999999995
+      },
+      "provenance": {
+        "equity": {
+          "fred_series": "NASDAQCOM",
+          "from_date": "2022-01-03",
+          "from_level": 15832.8,
+          "to_date": "2022-10-24",
+          "to_level": 10952.61,
+          "move": -0.3685059535700576
+        },
+        "rates_level": {
+          "fred_series": "DGS10",
+          "from_date": "2022-01-03",
+          "from_level": 1.63,
+          "to_date": "2022-10-24",
+          "to_level": 4.25,
+          "move": 0.0262
+        },
+        "oil": {
+          "fred_series": "DCOILWTICO",
+          "from_date": "2022-01-03",
+          "from_level": 75.99,
+          "to_date": "2022-10-24",
+          "to_level": 86.12,
+          "move": 0.12513991981446876
+        },
+        "usd": {
+          "fred_series": "DTWEXBGS",
+          "from_date": "2022-01-03",
+          "from_level": 115.4101,
+          "to_date": "2022-10-24",
+          "to_level": 128.0304,
+          "move": 0.10377586381297668
+        },
+        "credit_spread": {
+          "fred_series": "DBAA minus DGS10",
+          "from_date": "2022-01-03/2022-01-03",
+          "from_level": 1.82,
+          "to_date": "2022-10-24/2022-10-24",
+          "to_level": 2.34,
+          "move": 0.005199999999999995
+        }
+      }
+    },
+    {
+      "name": "2023 SVB",
+      "type": "historical",
+      "description": "The Silicon Valley Bank failure and the front-end rally it caused.",
+      "window": {
+        "start": "2023-03-08",
+        "end": "2023-03-15"
+      },
+      "factor_shocks": {
+        "equity": -0.012338243574102785,
+        "rates_level": -0.004700000000000002,
+        "oil": -0.12772650916629205,
+        "usd": 0.005393367455975879,
+        "credit_spread": 0.00430000000000001
+      },
+      "provenance": {
+        "equity": {
+          "fred_series": "NASDAQCOM",
+          "from_date": "2023-03-08",
+          "from_level": 11576.0,
+          "to_date": "2023-03-15",
+          "to_level": 11434.05,
+          "move": -0.012338243574102785
+        },
+        "rates_level": {
+          "fred_series": "DGS10",
+          "from_date": "2023-03-08",
+          "from_level": 3.98,
+          "to_date": "2023-03-15",
+          "to_level": 3.51,
+          "move": -0.004700000000000002
+        },
+        "oil": {
+          "fred_series": "DCOILWTICO",
+          "from_date": "2023-03-08",
+          "from_level": 76.56,
+          "to_date": "2023-03-15",
+          "to_level": 67.38,
+          "move": -0.12772650916629205
+        },
+        "usd": {
+          "fred_series": "DTWEXBGS",
+          "from_date": "2023-03-08",
+          "from_level": 121.4511,
+          "to_date": "2023-03-15",
+          "to_level": 122.1079,
+          "move": 0.005393367455975879
+        },
+        "credit_spread": {
+          "fred_series": "DBAA minus DGS10",
+          "from_date": "2023-03-08/2023-03-08",
+          "from_level": 1.79,
+          "to_date": "2023-03-15/2023-03-15",
+          "to_level": 2.22,
+          "move": 0.00430000000000001
+        }
+      }
+    },
+    {
+      "name": "Hypothetical: equity -20%",
+      "type": "hypothetical",
+      "description": "Broad equity down 20% with all other factors held.",
+      "factor_shocks": {
+        "equity": -0.2231435513142097
+      }
+    },
+    {
+      "name": "Hypothetical: rates +100bp parallel",
+      "type": "hypothetical",
+      "description": "Parallel 100bp rise in yields, spreads unchanged.",
+      "factor_shocks": {
+        "rates_level": 0.01
+      }
+    },
+    {
+      "name": "Hypothetical: credit +200bp",
+      "type": "hypothetical",
+      "description": "Baa spread over Treasuries widens 200bp.",
+      "factor_shocks": {
+        "credit_spread": 0.02
+      }
     }
   ]
 }

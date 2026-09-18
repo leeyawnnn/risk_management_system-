@@ -1,5 +1,5 @@
 {
-  "name": "Diversified Multi-Asset Book",
+  "name": "Multi-Asset Book",
   "notional": 25000000,
   "return_type": "log",
   "missing_policy": "skip",
@@ -12,18 +12,16 @@
   "stress_scenarios": "config/stress_scenarios.json",
   "factor_betas": "config/factor_betas.json",
   "positions": [
-    { "asset": "SPY",  "weight": 0.15, "sector": "Equity" },
-    { "asset": "QQQ",  "weight": 0.10, "sector": "Equity" },
-    { "asset": "EFA",  "weight": 0.08, "sector": "Equity" },
-    { "asset": "AAPL", "weight": 0.05, "sector": "Equity" },
-    { "asset": "MSFT", "weight": 0.05, "sector": "Equity" },
-    { "asset": "JPM",  "weight": 0.04, "sector": "Equity" },
-    { "asset": "XOM",  "weight": 0.04, "sector": "Equity" },
-    { "asset": "TLT",  "weight": 0.12, "sector": "Rates" },
-    { "asset": "IEF",  "weight": 0.12, "sector": "Rates" },
-    { "asset": "LQD",  "weight": 0.08, "sector": "Credit" },
-    { "asset": "HYG",  "weight": 0.06, "sector": "Credit" },
-    { "asset": "GLD",  "weight": 0.08, "sector": "Commodity" },
-    { "asset": "USO",  "weight": 0.03, "sector": "Commodity" }
+    { "asset": "EQ_US_LARGE",  "weight": 0.18, "sector": "Equity" },
+    { "asset": "EQ_US_TECH",   "weight": 0.10, "sector": "Equity" },
+    { "asset": "EQ_US_BLUE",   "weight": 0.07, "sector": "Equity" },
+    { "asset": "UST_2Y",       "weight": 0.15, "sector": "Rates" },
+    { "asset": "UST_10Y",      "weight": 0.12, "sector": "Rates" },
+    { "asset": "UST_30Y",      "weight": 0.05, "sector": "Rates" },
+    { "asset": "CREDIT_AAA",   "weight": 0.08, "sector": "Credit" },
+    { "asset": "CREDIT_BAA",   "weight": 0.10, "sector": "Credit" },
+    { "asset": "COMD_WTI",     "weight": 0.05, "sector": "Commodity" },
+    { "asset": "FX_USD_BROAD", "weight": 0.05, "sector": "FX" },
+    { "asset": "FX_EURUSD",    "weight": 0.05, "sector": "FX" }
   ]
 }
