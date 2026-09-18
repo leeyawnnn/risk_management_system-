@@ -180,8 +180,8 @@
   "backtests": [
     {
       "acerbi_szekely": {
-        "p_value_z1": 0.0,
-        "p_value_z2": 0.0212,
+        "p_value_z1": 0.4958,
+        "p_value_z2": 0.5404,
         "simulations": 5000,
         "z1": -2.220446049250313e-16,
         "z1_defined": true,
@@ -271,7 +271,7 @@
     {
       "acerbi_szekely": {
         "p_value_z1": 0.0,
-        "p_value_z2": 0.0646,
+        "p_value_z2": 0.0678,
         "simulations": 5000,
         "z1": -0.11486407814337651,
         "z1_defined": true,
@@ -315,8 +315,8 @@
     },
     {
       "acerbi_szekely": {
-        "p_value_z1": 0.004821213338690237,
-        "p_value_z2": 0.0002,
+        "p_value_z1": 0.4794,
+        "p_value_z2": 0.533,
         "simulations": 5000,
         "z1": 0.0,
         "z1_defined": true,
@@ -405,8 +405,8 @@
     },
     {
       "acerbi_szekely": {
-        "p_value_z1": 0.0,
-        "p_value_z2": 0.0064,
+        "p_value_z1": 0.0002,
+        "p_value_z2": 0.0044,
         "simulations": 5000,
         "z1": -0.18212821741529983,
         "z1_defined": true,
@@ -912,7 +912,7 @@
     "annualization_factor": 252.0,
     "as_of": "2026-09-11",
     "covariance_method": "ledoit_wolf",
-    "git_commit": "ad6766e5b5",
+    "git_commit": "d0a6439acb",
     "portfolio_name": "Multi-Asset Book",
     "seed": 42
   },

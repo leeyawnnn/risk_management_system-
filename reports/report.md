@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Data as-of | 2026-09-11 |
-| Code commit | ad6766e5b5 |
+| Code commit | d0a6439acb |
 | Seed | 42 |
 | Notional | $25,000,000 |
 | Covariance estimator | ledoit_wolf |
@@ -37,12 +37,12 @@ Kupiec tests whether exceptions arrived at the advertised rate. Christoffersen t
 
 | Method | Conf | VaR | Exc. | Exp. | Kupiec p | Christ. p | Cond. cov. p | Basel | AS Z2 | Z2 p |
 |---|---:|---:|---:|---:|---|---|---|---|---:|---:|
-| Historical | 95% | 0.84% | 61 | 61.9 | 0.906 pass | 0.000 REJECT | 0.001 REJECT | green (4/250) | 0.015 | 0.021 |
+| Historical | 95% | 0.84% | 61 | 61.9 | 0.906 pass | 0.000 REJECT | 0.001 REJECT | green (4/250) | 0.015 | 0.540 |
 | Parametric | 95% | 0.80% | 66 | 61.9 | 0.597 pass | 0.001 REJECT | 0.002 REJECT | green (5/250) | -0.187 | 0.069 |
-| MonteCarlo | 95% | 0.80% | 66 | 61.9 | 0.597 pass | 0.001 REJECT | 0.002 REJECT | green (5/250) | -0.189 | 0.065 |
-| Historical | 99% | 1.29% | 12 | 12.4 | 0.913 pass | 0.004 REJECT | 0.016 REJECT | green (1/250) | 0.031 | 0.000 |
+| MonteCarlo | 95% | 0.80% | 66 | 61.9 | 0.597 pass | 0.001 REJECT | 0.002 REJECT | green (5/250) | -0.189 | 0.068 |
+| Historical | 99% | 1.29% | 12 | 12.4 | 0.913 pass | 0.004 REJECT | 0.016 REJECT | green (1/250) | 0.031 | 0.533 |
 | Parametric | 99% | 1.14% | 19 | 12.4 | 0.080 pass | 0.032 REJECT | 0.021 REJECT | green (1/250) | -0.797 | 0.005 |
-| MonteCarlo | 99% | 1.13% | 19 | 12.4 | 0.080 pass | 0.032 REJECT | 0.021 REJECT | green (1/250) | -0.814 | 0.006 |
+| MonteCarlo | 99% | 1.13% | 19 | 12.4 | 0.080 pass | 0.032 REJECT | 0.021 REJECT | green (1/250) | -0.814 | 0.004 |
 
 ## Instruments
 
