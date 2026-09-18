@@ -309,12 +309,21 @@ AcerbiSzekelyResult acerbi_szekely(const Eigen::VectorXd& returns,
   // Both statistics share the same accumulator: the sum over exception days of
   // (return / ES). Returns are negative in the tail and ES is a positive loss,
   // so each term is negative and the sums below sit near -1 before the +1.
-  auto statistics = [&](const Eigen::VectorXd& x) {
+  //
+  // The realised statistic uses the VaR and ES the model reported. The null
+  // simulation uses the VaR and ES implied by the predictive distribution it
+  // draws from, which are not the same thing and must not be conflated.
+  // Feeding the reported levels into the null as well makes both sides shift
+  // together whenever the reported ES is wrong, and the p-value then cannot
+  // detect a mis-stated ES at all -- which is the one thing this test exists
+  // to do.
+  auto statistics = [&](const Eigen::VectorXd& x, double var_used,
+                        double es_used) {
     double acc = 0.0;
     long hits = 0;
     for (Eigen::Index t = 0; t < x.size(); ++t) {
-      if (x(t) < -var_level) {
-        acc += x(t) / es_level;
+      if (x(t) < -var_used) {
+        acc += x(t) / es_used;
         ++hits;
       }
     }
@@ -327,7 +336,7 @@ AcerbiSzekelyResult acerbi_szekely(const Eigen::VectorXd& returns,
   AcerbiSzekelyResult r;
   r.observations = T;
   r.simulations = simulations;
-  const auto [z1, z2, hits] = statistics(returns);
+  const auto [z1, z2, hits] = statistics(returns, var_level, es_level);
   r.exceptions = hits;
   r.z2 = z2;
   r.z1_defined = hits > 0;
@@ -338,6 +347,14 @@ AcerbiSzekelyResult acerbi_szekely(const Eigen::VectorXd& returns,
   // count how often the simulated statistic falls at or below the realised
   // one. The tail of interest is the left one -- a NEGATIVE Z means realised
   // losses beyond VaR were worse than the model said.
+  // The Gaussian predictive distribution's own VaR and ES. Under the null the
+  // data comes from N(mean, stdev), so these are the levels a correct model
+  // would have reported; comparing the realised statistic against a null
+  // built on them is what makes a wrong ES visible.
+  const double z_alpha = normal_ppf(confidence);
+  const double null_var = z_alpha * stdev - mean;
+  const double null_es = stdev * normal_pdf(z_alpha) / p - mean;
+
   std::mt19937_64 gen(seed);
   long le1 = 0, le2 = 0, defined1 = 0;
   Eigen::VectorXd sim(T);
@@ -345,7 +362,7 @@ AcerbiSzekelyResult acerbi_szekely(const Eigen::VectorXd& returns,
     for (Eigen::Index t = 0; t < T; ++t) {
       sim(t) = mean + stdev * standard_normal(gen);
     }
-    const auto [s1, s2, shits] = statistics(sim);
+    const auto [s1, s2, shits] = statistics(sim, null_var, null_es);
     if (shits > 0) {
       ++defined1;
       if (r.z1_defined && s1 <= r.z1) ++le1;

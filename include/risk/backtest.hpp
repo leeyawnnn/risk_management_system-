@@ -143,8 +143,12 @@ struct AcerbiSzekelyResult {
   bool z1_defined = false;  // false when there were no exceptions at all
 };
 
-// `mean` and `stdev` describe the Gaussian predictive distribution used to
-// simulate the null. `es_level` is the model's positive ES loss fraction.
+// `var_level` and `es_level` are the levels the MODEL reported, and the
+// realised statistic is computed against them. `mean` and `stdev` describe
+// the Gaussian predictive distribution the null is simulated from, and the
+// null statistic is computed against that distribution's OWN analytic VaR and
+// ES. Keeping the two apart is what lets the p-value detect a reported ES
+// that is inconsistent with the distribution it claims to come from.
 AcerbiSzekelyResult acerbi_szekely(const Eigen::VectorXd& returns,
                                    double var_level, double es_level,
                                    double confidence, double mean, double stdev,
