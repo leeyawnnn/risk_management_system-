@@ -62,7 +62,18 @@ jobs:
         run: cmake --build build -j
 
       - name: Test
-        run: ctest --test-dir build --output-on-failure --timeout 120
+        run: |
+          # On failure, re-run just the failures and echo them as workflow
+          # annotations. Job logs need repository admin to read through the
+          # API; annotations do not, so this is what makes a red run
+          # diagnosable by whoever is looking at it.
+          ctest --test-dir build --output-on-failure --timeout 120 || {
+            ctest --test-dir build --rerun-failed --output-on-failure \
+              > /tmp/failures.txt 2>&1 || true
+            grep -E "FAILED|with expansion|Failed|^[0-9]+/|error" /tmp/failures.txt \
+              | head -40 | while IFS= read -r line; do echo "::error::$line"; done
+            exit 1
+          }
 
   # ---------------------------------------------------------------------------
   # Sanitizers. Debug + asserts on, so is_psd() assertion failures surface here
@@ -100,7 +111,14 @@ jobs:
         env:
           UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
           ASAN_OPTIONS: detect_leaks=1
-        run: ctest --test-dir build --output-on-failure --timeout 300
+        run: |
+          ctest --test-dir build --output-on-failure --timeout 300 || {
+            ctest --test-dir build --rerun-failed --output-on-failure \
+              > /tmp/failures.txt 2>&1 || true
+            grep -E "FAILED|with expansion|Failed|runtime error|ERROR:" /tmp/failures.txt \
+              | head -40 | while IFS= read -r line; do echo "::error::$line"; done
+            exit 1
+          }
 
   # ---------------------------------------------------------------------------
   # The offline path: system dependencies only, no network access at configure
@@ -117,14 +135,29 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libeigen3-dev nlohmann-json3-dev catch2
+          echo "--- what the distribution actually provides ---"
+          dpkg -s libeigen3-dev nlohmann-json3-dev catch2 | grep -E '^(Package|Version)'
+          ls /usr/lib/*/cmake/Catch2/ 2>/dev/null || true
 
       - name: Configure offline
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRISK_OFFLINE=ON
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRISK_OFFLINE=ON \
+            2>&1 | tee /tmp/configure.txt || {
+            grep -iE "error|not found" /tmp/configure.txt | head -20 \
+              | while IFS= read -r line; do echo "::error::$line"; done
+            exit 1
+          }
 
       - name: Build and test
         run: |
           cmake --build build -j
-          ctest --test-dir build --output-on-failure --timeout 120
+          ctest --test-dir build --output-on-failure --timeout 120 || {
+            ctest --test-dir build --rerun-failed --output-on-failure \
+              > /tmp/failures.txt 2>&1 || true
+            grep -E "FAILED|with expansion|Failed" /tmp/failures.txt \
+              | head -40 | while IFS= read -r line; do echo "::error::$line"; done
+            exit 1
+          }
 
   # ---------------------------------------------------------------------------
   # Formatting and static analysis.
@@ -152,14 +185,24 @@ jobs:
           path: ${{ env.FETCHCONTENT_BASE_DIR }}
           key: deps-${{ runner.os }}-eigen3.4.0-json3.12.0-catch2-3.8.1
 
+      # .clang-tidy enables whole groups (bugprone-*, modernize-*,
+      # readability-*) and every LLVM release adds checks to them. With an
+      # unpinned clang-tidy the job would start failing on code nobody
+      # touched, so the version is fixed here and bumped deliberately.
+      - name: Install clang-tidy 18
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-tidy-18
+          echo "TIDY=clang-tidy-18" >> "$GITHUB_ENV"
+
       - name: Configure (for compile_commands.json)
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 
       - name: Run clang-tidy
         run: |
-          clang-tidy --version
+          "$TIDY" --version
           find src apps -name '*.cpp' | sort \
-            | xargs clang-tidy -p build --quiet
+            | xargs "$TIDY" -p build --quiet
 
   # ---------------------------------------------------------------------------
   # Python tooling for the data-fetch and reference scripts.
@@ -216,19 +259,22 @@ jobs:
         # contains it. Regenerating with that same stamp is what makes the
         # comparison below a test of the numbers rather than of the SHA.
         run: |
+          cp reports/report.json /tmp/committed_report.json
           STAMP=$(python3 -c "import json;print(json.load(open('reports/report.json'))['provenance']['git_commit'])")
           echo "regenerating with the committed stamp: $STAMP"
           ./scripts/build_reports.sh --commit "$STAMP"
 
       - name: Fail if the committed worked example is stale
-        # The pipeline is deterministic: fixed seeds, no wall-clock, and no
-        # standard-library distribution whose algorithm varies by platform.
-        # A Linux runner must therefore reproduce macOS output byte for byte.
+        # Compared numerically rather than byte for byte. The pipeline is
+        # deterministic in everything this project controls, but it still
+        # runs through std::erfc and Eigen's decompositions, which differ in
+        # the last bits between glibc and macOS libm and between AVX2 and
+        # NEON summation orders. Demanding bit-identity across platforms was
+        # the wrong assertion and CI caught it.
         run: |
-          git --no-pager diff --stat -- reports/
-          git diff --quiet -- reports/ || {
-            echo "::error::reports/ is out of date, or the pipeline is not reproducible on this platform. Run scripts/build_reports.sh and commit the result."
-            git --no-pager diff -- reports/ | head -60
+          python3 scripts/check_reports_fresh.py \
+            /tmp/committed_report.json reports/report.json --rtol 1e-6 || {
+            echo "::error::reports/ is out of date. Run scripts/build_reports.sh and commit the result."
             exit 1
           }
 

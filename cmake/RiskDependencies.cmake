@@ -107,8 +107,12 @@ function(risk_provide_catch2)
   find_package(Catch2 3 QUIET
       NO_CMAKE_PACKAGE_REGISTRY NO_CMAKE_SYSTEM_PACKAGE_REGISTRY)
   if(Catch2_FOUND)
-    message(STATUS "Catch2: using system copy ${Catch2_VERSION}")
-    set(RISK_CATCH2_EXTRAS "${Catch2_DIR}/.." PARENT_SCOPE)
+    message(STATUS "Catch2: using system copy ${Catch2_VERSION} (${Catch2_DIR})")
+    # A packaged Catch2 installs Catch.cmake next to Catch2Config.cmake, not
+    # in a sibling extras/ directory the way the source tree lays it out.
+    # Offering both and letting include(Catch) pick is more robust than
+    # guessing which layout the distribution used.
+    set(RISK_CATCH2_EXTRAS "${Catch2_DIR};${Catch2_DIR}/.." PARENT_SCOPE)
     return()
   endif()
   if(RISK_OFFLINE)
