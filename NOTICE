@@ -1,0 +1,57 @@
+risk-management-engine
+Copyright 2026 Lyonn Lie
+
+This product includes software developed under the Apache License 2.0.
+See LICENSE for the full text.
+
+--------------------------------------------------------------------------
+Third-party data redistributed in this repository
+--------------------------------------------------------------------------
+
+The files under data/returns/ are derived from daily series published by the
+Federal Reserve Bank of St. Louis (FRED), https://fred.stlouisfed.org/.
+Raw vendor payloads are not redistributed; the committed files are derived
+level series, and scripts/fetch_data.py reproduces them from source.
+
+FRED aggregates series from publishers whose terms differ:
+
+  DGS2, DGS10, DGS30        Board of Governors of the Federal Reserve System
+                            (H.15 Selected Interest Rates).
+                            US Government work, public domain.
+
+  DTWEXBGS, DEXUSEU         Board of Governors of the Federal Reserve System
+                            (H.10 Foreign Exchange Rates).
+                            US Government work, public domain.
+
+  DCOILWTICO                U.S. Energy Information Administration.
+                            US Government work, public domain.
+
+  SP500, DJIA               S&P Dow Jones Indices LLC.
+                            Copyright (c) S&P Dow Jones Indices LLC.
+                            Redistribution and reproduction are restricted;
+                            see the terms on the corresponding FRED series
+                            page before redistributing.
+
+  NASDAQ100                 Nasdaq OMX Group.
+                            Redistribution restricted; see the terms on the
+                            corresponding FRED series page.
+
+  DAAA, DBAA                Moody's.
+                            Redistribution restricted; see the terms on the
+                            corresponding FRED series page.
+
+--------------------------------------------------------------------------
+Third-party software
+--------------------------------------------------------------------------
+
+Fetched at build time, not vendored into this repository:
+
+  Eigen 3.4.0               Mozilla Public License 2.0 (with some modules
+                            under LGPL; none of those are used here).
+                            https://eigen.tuxfamily.org/
+
+  nlohmann/json 3.12.0      MIT License.
+                            https://github.com/nlohmann/json
+
+  Catch2 3.8.1              Boost Software License 1.0. Test-only dependency.
+                            https://github.com/catchorg/Catch2

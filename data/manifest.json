@@ -1,0 +1,389 @@
+{
+  "generated_by": "scripts/fetch_data.py",
+  "git_commit": "5a1c58638c5c4f2240d24c8977478a7c142f5877",
+  "retrieved_utc": "2026-09-18T06:13:00+00:00",
+  "as_of": "2026-09-11",
+  "requested_through": "2026-09-17",
+  "sample_start": "2021-09-17",
+  "sample_end": "2026-09-11",
+  "aligned_observations": 1239,
+  "alignment_policy": "inner join on dates where every instrument quotes",
+  "source": "Federal Reserve Bank of St. Louis (FRED)",
+  "source_url": "https://fred.stlouisfed.org/graph/fredgraph.csv",
+  "instruments": [
+    {
+      "code": "EQ_US_LARGE",
+      "fred_series": "SP500",
+      "asset_class": "Equity",
+      "construction": "price",
+      "maturity_years": null,
+      "description": "S&P 500 price index (excludes dividends)",
+      "publisher": "S&P Dow Jones Indices",
+      "terms": "S&P Dow Jones Indices LLC; redistribution restricted, see FRED series page",
+      "raw_sha256": "c7d0652827794e96a9201cf43c7a7faeb09c2d9a0da0f0e24a3af3b4479118db",
+      "raw_observations": 1255
+    },
+    {
+      "code": "EQ_US_TECH",
+      "fred_series": "NASDAQ100",
+      "asset_class": "Equity",
+      "construction": "price",
+      "maturity_years": null,
+      "description": "Nasdaq-100 price index (excludes dividends)",
+      "publisher": "Nasdaq OMX Group",
+      "terms": "Nasdaq OMX; redistribution restricted, see FRED series page",
+      "raw_sha256": "5fe023b862608cccf95605d9ae745b22713180d6b21148d3e9cbce420cf37ba5",
+      "raw_observations": 1255
+    },
+    {
+      "code": "EQ_US_BLUE",
+      "fred_series": "DJIA",
+      "asset_class": "Equity",
+      "construction": "price",
+      "maturity_years": null,
+      "description": "Dow Jones Industrial Average price index (excludes dividends)",
+      "publisher": "S&P Dow Jones Indices",
+      "terms": "S&P Dow Jones Indices LLC; redistribution restricted, see FRED series page",
+      "raw_sha256": "451a2a7b908288a949f44ba9a0fcef4676a15be022960775e9a2735afe3b0cbe",
+      "raw_observations": 1255
+    },
+    {
+      "code": "UST_2Y",
+      "fred_series": "DGS2",
+      "asset_class": "Rates",
+      "construction": "par_yield",
+      "maturity_years": 2.0,
+      "description": "2-year Treasury constant maturity, held as a rolling par bond",
+      "publisher": "Board of Governors of the Federal Reserve System (H.15)",
+      "terms": "US Government work, public domain",
+      "raw_sha256": "fce94f059531ba0175552c8cfa840a4603cca119438ec293744eb1f21641e8bf",
+      "raw_observations": 1248
+    },
+    {
+      "code": "UST_10Y",
+      "fred_series": "DGS10",
+      "asset_class": "Rates",
+      "construction": "par_yield",
+      "maturity_years": 10.0,
+      "description": "10-year Treasury constant maturity, held as a rolling par bond",
+      "publisher": "Board of Governors of the Federal Reserve System (H.15)",
+      "terms": "US Government work, public domain",
+      "raw_sha256": "2339a8dfd603fe6cdd0b335f61cf1251846af9ac10cdbb3a483efc5b2a8f8371",
+      "raw_observations": 1248
+    },
+    {
+      "code": "UST_30Y",
+      "fred_series": "DGS30",
+      "asset_class": "Rates",
+      "construction": "par_yield",
+      "maturity_years": 30.0,
+      "description": "30-year Treasury constant maturity, held as a rolling par bond",
+      "publisher": "Board of Governors of the Federal Reserve System (H.15)",
+      "terms": "US Government work, public domain",
+      "raw_sha256": "8df4934d4db9c31d187e3bf9cb35bfc89d58efd4cdb37c0065361ff82e130319",
+      "raw_observations": 1248
+    },
+    {
+      "code": "CREDIT_AAA",
+      "fred_series": "DAAA",
+      "asset_class": "Credit",
+      "construction": "par_yield",
+      "maturity_years": 20.0,
+      "description": "Moody's seasoned Aaa corporate yield, held as a rolling 20y par bond",
+      "publisher": "Moody's",
+      "terms": "Moody's / Ryan ALM; redistribution restricted, see FRED series page",
+      "raw_sha256": "02e7f591dea38301d9f0ed9c7ed1ec27b214834b830479c242fa4ed5f4261ae8",
+      "raw_observations": 1247
+    },
+    {
+      "code": "CREDIT_BAA",
+      "fred_series": "DBAA",
+      "asset_class": "Credit",
+      "construction": "par_yield",
+      "maturity_years": 20.0,
+      "description": "Moody's seasoned Baa corporate yield, held as a rolling 20y par bond",
+      "publisher": "Moody's",
+      "terms": "Moody's / Ryan ALM; redistribution restricted, see FRED series page",
+      "raw_sha256": "70f964157ea4f66b4a69f4908979510d1608e20b850cded3a05adda30e8674ea",
+      "raw_observations": 1247
+    },
+    {
+      "code": "COMD_WTI",
+      "fred_series": "DCOILWTICO",
+      "asset_class": "Commodity",
+      "construction": "price",
+      "maturity_years": null,
+      "description": "West Texas Intermediate spot, USD per barrel",
+      "publisher": "U.S. Energy Information Administration",
+      "terms": "US Government work, public domain",
+      "raw_sha256": "6caa0769558b3b1e296cda1b6395c93ed7299794c6f92c673ffc107510a6be2f",
+      "raw_observations": 1246
+    },
+    {
+      "code": "FX_USD_BROAD",
+      "fred_series": "DTWEXBGS",
+      "asset_class": "FX",
+      "construction": "price",
+      "maturity_years": null,
+      "description": "Nominal broad USD index; long USD against a trade-weighted basket",
+      "publisher": "Board of Governors of the Federal Reserve System (H.10)",
+      "terms": "US Government work, public domain",
+      "raw_sha256": "27815bb37d461899b8d89a1e84ff00eb758ad31a7df001fa88d1941876fcdc04",
+      "raw_observations": 1246
+    },
+    {
+      "code": "FX_EURUSD",
+      "fred_series": "DEXUSEU",
+      "asset_class": "FX",
+      "construction": "price",
+      "maturity_years": null,
+      "description": "EUR/USD spot, USD per EUR; long EUR against USD",
+      "publisher": "Board of Governors of the Federal Reserve System (H.10)",
+      "terms": "US Government work, public domain",
+      "raw_sha256": "77a56bd485588e816d0d5711c98f7adb4229aaea04e5740ac55ad982e3baf7d4",
+      "raw_observations": 1246
+    }
+  ],
+  "dropped_dates": [
+    {
+      "date": "2021-10-11",
+      "missing_in": [
+        "CREDIT_AAA",
+        "CREDIT_BAA",
+        "FX_EURUSD",
+        "FX_USD_BROAD",
+        "UST_10Y",
+        "UST_2Y",
+        "UST_30Y"
+      ]
+    },
+    {
+      "date": "2021-11-11",
+      "missing_in": [
+        "FX_EURUSD",
+        "FX_USD_BROAD",
+        "UST_10Y",
+        "UST_2Y",
+        "UST_30Y"
+      ]
+    },
+    {
+      "date": "2021-11-26",
+      "missing_in": [
+        "COMD_WTI"
+      ]
+    },
+    {
+      "date": "2021-12-31",
+      "missing_in": [
+        "CREDIT_AAA",
+        "CREDIT_BAA",
+        "FX_EURUSD",
+        "FX_USD_BROAD"
+      ]
+    },
+    {
+      "date": "2022-04-15",
+      "missing_in": [
+        "COMD_WTI",
+        "CREDIT_AAA",
+        "CREDIT_BAA",
+        "EQ_US_BLUE",
+        "EQ_US_LARGE",
+        "EQ_US_TECH",
+        "UST_10Y",
+        "UST_2Y",
+        "UST_30Y"
+      ]
+    },
+    {
+      "date": "2022-10-10",
+      "missing_in": [
+        "FX_EURUSD",
+        "FX_USD_BROAD",
+        "UST_10Y",
+        "UST_2Y",
+        "UST_30Y"
+      ]
+    },
+    {
+      "date": "2022-11-11",
+      "missing_in": [
+        "CREDIT_AAA",
+        "CREDIT_BAA",
+        "FX_EURUSD",
+        "FX_USD_BROAD",
+        "UST_10Y",
+        "UST_2Y",
+        "UST_30Y"
+      ]
+    },
+    {
+      "date": "2023-04-07",
+      "missing_in": [
+        "COMD_WTI",
+        "CREDIT_AAA",
+        "CREDIT_BAA",
+        "EQ_US_BLUE",
+        "EQ_US_LARGE",
+        "EQ_US_TECH"
+      ]
+    },
+    {
+      "date": "2023-10-09",
+      "missing_in": [
+        "COMD_WTI",
+        "CREDIT_AAA",
+        "CREDIT_BAA",
+        "FX_EURUSD",
+        "FX_USD_BROAD",
+        "UST_10Y",
+        "UST_2Y",
+        "UST_30Y"
+      ]
+    },
+    {
+      "date": "2023-11-10",
+      "missing_in": [
+        "COMD_WTI",
+        "FX_EURUSD",
+        "FX_USD_BROAD"
+      ]
+    },
+    {
+      "date": "2024-03-29",
+      "missing_in": [
+        "COMD_WTI",
+        "CREDIT_AAA",
+        "CREDIT_BAA",
+        "EQ_US_BLUE",
+        "EQ_US_LARGE",
+        "EQ_US_TECH",
+        "UST_10Y",
+        "UST_2Y",
+        "UST_30Y"
+      ]
+    },
+    {
+      "date": "2024-10-14",
+      "missing_in": [
+        "COMD_WTI",
+        "CREDIT_AAA",
+        "CREDIT_BAA",
+        "FX_EURUSD",
+        "FX_USD_BROAD",
+        "UST_10Y",
+        "UST_2Y",
+        "UST_30Y"
+      ]
+    },
+    {
+      "date": "2024-11-11",
+      "missing_in": [
+        "COMD_WTI",
+        "CREDIT_AAA",
+        "CREDIT_BAA",
+        "FX_EURUSD",
+        "FX_USD_BROAD",
+        "UST_10Y",
+        "UST_2Y",
+        "UST_30Y"
+      ]
+    },
+    {
+      "date": "2025-01-09",
+      "missing_in": [
+        "COMD_WTI",
+        "EQ_US_BLUE",
+        "EQ_US_LARGE",
+        "EQ_US_TECH"
+      ]
+    },
+    {
+      "date": "2025-04-18",
+      "missing_in": [
+        "COMD_WTI",
+        "CREDIT_AAA",
+        "CREDIT_BAA",
+        "EQ_US_BLUE",
+        "EQ_US_LARGE",
+        "EQ_US_TECH",
+        "UST_10Y",
+        "UST_2Y",
+        "UST_30Y"
+      ]
+    },
+    {
+      "date": "2025-10-13",
+      "missing_in": [
+        "COMD_WTI",
+        "CREDIT_AAA",
+        "CREDIT_BAA",
+        "FX_EURUSD",
+        "FX_USD_BROAD",
+        "UST_10Y",
+        "UST_2Y",
+        "UST_30Y"
+      ]
+    },
+    {
+      "date": "2025-11-11",
+      "missing_in": [
+        "COMD_WTI",
+        "CREDIT_AAA",
+        "CREDIT_BAA",
+        "FX_EURUSD",
+        "FX_USD_BROAD",
+        "UST_10Y",
+        "UST_2Y",
+        "UST_30Y"
+      ]
+    },
+    {
+      "date": "2026-04-03",
+      "missing_in": [
+        "COMD_WTI",
+        "CREDIT_AAA",
+        "CREDIT_BAA",
+        "EQ_US_BLUE",
+        "EQ_US_LARGE",
+        "EQ_US_TECH"
+      ]
+    },
+    {
+      "date": "2026-09-14",
+      "missing_in": [
+        "FX_EURUSD",
+        "FX_USD_BROAD"
+      ]
+    },
+    {
+      "date": "2026-09-15",
+      "missing_in": [
+        "FX_EURUSD",
+        "FX_USD_BROAD"
+      ]
+    },
+    {
+      "date": "2026-09-16",
+      "missing_in": [
+        "COMD_WTI",
+        "FX_EURUSD",
+        "FX_USD_BROAD"
+      ]
+    },
+    {
+      "date": "2026-09-17",
+      "missing_in": [
+        "COMD_WTI",
+        "CREDIT_AAA",
+        "CREDIT_BAA",
+        "FX_EURUSD",
+        "FX_USD_BROAD",
+        "UST_10Y",
+        "UST_2Y",
+        "UST_30Y"
+      ]
+    }
+  ]
+}
