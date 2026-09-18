@@ -69,8 +69,8 @@ TEST_CASE("binomial CDF matches a direct sum") {
 TEST_CASE("Kupiec statistic is zero when the exception rate is exact") {
   // 5 exceptions in 100 days at 95% is exactly the expected rate, so the
   // restricted and unrestricted likelihoods coincide and LR must be 0.
-  const auto r = kupiec_pof(series_with_exceptions(100, {3, 20, 44, 61, 90}),
-                            kVar, 0.95);
+  const auto r =
+      kupiec_pof(series_with_exceptions(100, {3, 20, 44, 61, 90}), kVar, 0.95);
   CHECK(r.exceptions == 5);
   CHECK(r.observed_rate == Approx(0.05));
   CHECK(r.lr_statistic == Approx(0.0).margin(1e-12));
@@ -86,9 +86,8 @@ TEST_CASE("Kupiec matches a hand-computed likelihood ratio") {
 
   const double p = 0.05;
   const double pi = 15.0 / 250.0;
-  const double expected =
-      -2.0 * ((235 * std::log(1 - p) + 15 * std::log(p)) -
-              (235 * std::log(1 - pi) + 15 * std::log(pi)));
+  const double expected = -2.0 * ((235 * std::log(1 - p) + 15 * std::log(p)) -
+                                  (235 * std::log(1 - pi) + 15 * std::log(pi)));
   CHECK(r.exceptions == 15);
   CHECK(r.lr_statistic == Approx(expected).epsilon(1e-12));
   // 6% against 5% on 250 days is well within noise.
@@ -141,10 +140,12 @@ TEST_CASE("Christoffersen catches clustered exceptions that Kupiec cannot") {
   for (int i = 0; i < 12; ++i) clustered.push_back(100 + i);
 
   const auto ks = kupiec_pof(series_with_exceptions(250, spread), kVar, 0.95);
-  const auto kc = kupiec_pof(series_with_exceptions(250, clustered), kVar, 0.95);
+  const auto kc =
+      kupiec_pof(series_with_exceptions(250, clustered), kVar, 0.95);
   CHECK(ks.lr_statistic == Approx(kc.lr_statistic));
 
-  const auto cs = christoffersen(series_with_exceptions(250, spread), kVar, 0.95);
+  const auto cs =
+      christoffersen(series_with_exceptions(250, spread), kVar, 0.95);
   const auto cc =
       christoffersen(series_with_exceptions(250, clustered), kVar, 0.95);
   CHECK(cc.n11 == 11);
@@ -188,15 +189,16 @@ TEST_CASE("Basel looks at the most recent window only") {
   // 250-day window is clean, so the zone must be green.
   std::vector<int> at;
   for (int i = 0; i < 12; ++i) at.push_back(i * 5);
-  const auto r = basel_traffic_light(series_with_exceptions(600, at), kVar, 0.99);
+  const auto r =
+      basel_traffic_light(series_with_exceptions(600, at), kVar, 0.99);
   CHECK(r.exceptions == 0);
   CHECK(r.zone == BaselZone::Green);
   CHECK(r.window_complete);
 }
 
 TEST_CASE("Basel flags an incomplete window") {
-  const auto r = basel_traffic_light(series_with_exceptions(100, {1, 2}), kVar,
-                                     0.99, 250);
+  const auto r =
+      basel_traffic_light(series_with_exceptions(100, {1, 2}), kVar, 0.99, 250);
   CHECK_FALSE(r.window_complete);
   CHECK(r.window == 250);
 }
@@ -220,8 +222,8 @@ TEST_CASE("Acerbi-Szekely Z is near zero on data from the assumed model") {
   Eigen::VectorXd r(4000);
   for (Eigen::Index i = 0; i < r.size(); ++i) r(i) = nd(gen);
 
-  const auto out = acerbi_szekely(r, var_level, es_level, conf, 0.0, sigma,
-                                  2000, 7);
+  const auto out =
+      acerbi_szekely(r, var_level, es_level, conf, 0.0, sigma, 2000, 7);
   CHECK(out.z1_defined);
   CHECK(std::abs(out.z1) < 0.15);
   CHECK(std::abs(out.z2) < 0.15);
@@ -246,8 +248,8 @@ TEST_CASE("Acerbi-Szekely Z goes negative when the tail is understated") {
   Eigen::VectorXd r(4000);
   for (Eigen::Index i = 0; i < r.size(); ++i) r(i) = td(gen) * scale;
 
-  const auto out = acerbi_szekely(r, var_level, es_level, conf, 0.0, sigma,
-                                  2000, 7);
+  const auto out =
+      acerbi_szekely(r, var_level, es_level, conf, 0.0, sigma, 2000, 7);
   CHECK(out.z1 < 0.0);
   CHECK(out.z2 < 0.0);
   CHECK(out.p_value_z2 < 0.05);

@@ -61,6 +61,7 @@ add_library(risk_core
     src/backtest.cpp
     src/covariance.cpp
     src/cvar.cpp
+    src/decomposition.cpp
     src/figures.cpp
     src/portfolio.cpp
     src/reporter.cpp
@@ -98,6 +99,7 @@ if(RISK_BUILD_TESTS)
       tests/test_backtest.cpp
       tests/test_covariance.cpp
       tests/test_cvar.cpp
+      tests/test_decomposition.cpp
       tests/test_portfolio.cpp
       tests/test_return_series.cpp
       tests/test_stress_test.cpp

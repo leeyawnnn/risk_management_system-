@@ -2,8 +2,12 @@
 
 #include <nlohmann/json.hpp>
 
+#include <cmath>
 #include <fstream>
+#include <limits>
 #include <stdexcept>
+
+#include "risk/var.hpp"
 
 namespace risk {
 
@@ -108,12 +112,73 @@ FactorBetas load_factor_betas(const std::string& path) {
   }
   nlohmann::json j;
   in >> j;
+
+  // The generated file nests the loadings under "betas" alongside "_meta" and
+  // "diagnostics". Reading the top level directly would treat those two as
+  // assets. A plain { asset: { factor: beta } } file still works.
+  const nlohmann::json& src = j.contains("betas") ? j.at("betas") : j;
+
   FactorBetas betas;
-  for (auto& [asset, factors] : j.items()) {
-    for (auto& [factor, beta] : factors.items())
-      betas[asset][factor] = beta.get<double>();
+  for (const auto& [asset, factors] : src.items()) {
+    if (!factors.is_object()) continue;
+    for (const auto& [factor, beta] : factors.items()) {
+      if (beta.is_number()) betas[asset][factor] = beta.get<double>();
+    }
   }
   return betas;
+}
+
+ReverseStressResult reverse_stress(const Portfolio& portfolio,
+                                   const FactorBetas& betas,
+                                   const std::vector<std::string>& factors,
+                                   const Eigen::MatrixXd& factor_cov,
+                                   double target_loss_pct) {
+  const auto N = portfolio.size();
+  const auto K = static_cast<Eigen::Index>(factors.size());
+  if (factor_cov.rows() != K || factor_cov.cols() != K) {
+    throw std::invalid_argument("reverse_stress: factor_cov must be K x K");
+  }
+  if (!(target_loss_pct > 0.0)) {
+    throw std::invalid_argument("reverse_stress: target_loss_pct must be > 0");
+  }
+
+  const auto& names = portfolio.names();
+  Eigen::MatrixXd B = Eigen::MatrixXd::Zero(N, K);
+  for (Eigen::Index i = 0; i < N; ++i) {
+    auto ait = betas.find(names[static_cast<std::size_t>(i)]);
+    if (ait == betas.end()) continue;
+    for (Eigen::Index k = 0; k < K; ++k) {
+      auto fit = ait->second.find(factors[static_cast<std::size_t>(k)]);
+      if (fit != ait->second.end()) B(i, k) = fit->second;
+    }
+  }
+
+  const Eigen::VectorXd b = B.transpose() * portfolio.weights();
+  const Eigen::VectorXd sigma_b = factor_cov * b;
+  const double denom = b.dot(sigma_b);
+
+  ReverseStressResult r;
+  r.factors = factors;
+  r.asset_names = names;
+  r.target_loss_pct = target_loss_pct;
+  r.target_loss_dollar = target_loss_pct * portfolio.notional();
+
+  if (!(denom > 0.0)) {
+    // The book has no factor exposure at all, so no factor move reaches the
+    // loss. Report that honestly instead of dividing by zero.
+    r.factor_move = Eigen::VectorXd::Zero(K);
+    r.asset_shock = Eigen::VectorXd::Zero(N);
+    r.mahalanobis_distance = std::numeric_limits<double>::infinity();
+    r.gaussian_probability = 0.0;
+    return r;
+  }
+
+  r.factor_move = (-target_loss_pct / denom) * sigma_b;
+  r.asset_shock = B * r.factor_move;
+  r.factor_model_vol = std::sqrt(denom);
+  r.mahalanobis_distance = target_loss_pct / r.factor_model_vol;
+  r.gaussian_probability = normal_cdf(-r.mahalanobis_distance);
+  return r;
 }
 
 }  // namespace risk

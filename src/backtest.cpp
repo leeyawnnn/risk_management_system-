@@ -110,12 +110,13 @@ double binomial_cdf(int k, int n, double p) {
   // Summed in log space: at n = 250 the individual terms are fine, but the
   // same routine is used for multi-year windows where they are not.
   double total = 0.0;
-  const double log_p = (p > 0.0) ? std::log(p) : -std::numeric_limits<double>::infinity();
+  const double log_p =
+      (p > 0.0) ? std::log(p) : -std::numeric_limits<double>::infinity();
   const double log_q =
       (p < 1.0) ? std::log1p(-p) : -std::numeric_limits<double>::infinity();
   for (int i = 0; i <= k; ++i) {
-    const double log_choose = std::lgamma(n + 1.0) - std::lgamma(i + 1.0) -
-                              std::lgamma(n - i + 1.0);
+    const double log_choose =
+        std::lgamma(n + 1.0) - std::lgamma(i + 1.0) - std::lgamma(n - i + 1.0);
     const double term = log_choose + static_cast<double>(i) * log_p +
                         static_cast<double>(n - i) * log_q;
     total += std::exp(term);
@@ -159,24 +160,31 @@ ChristoffersenResult christoffersen(const Eigen::VectorXd& returns,
   for (std::size_t t = 1; t < hits.size(); ++t) {
     const bool prev = hits[t - 1];
     const bool cur = hits[t];
-    if (!prev && !cur) ++r.n00;
-    else if (!prev && cur) ++r.n01;
-    else if (prev && !cur) ++r.n10;
-    else ++r.n11;
+    if (!prev && !cur)
+      ++r.n00;
+    else if (!prev && cur)
+      ++r.n01;
+    else if (prev && !cur)
+      ++r.n10;
+    else
+      ++r.n11;
   }
 
   const long row0 = r.n00 + r.n01;
   const long row1 = r.n10 + r.n11;
   const long total = row0 + row1;
-  r.pi01 = (row0 > 0) ? static_cast<double>(r.n01) / static_cast<double>(row0) : 0.0;
-  r.pi11 = (row1 > 0) ? static_cast<double>(r.n11) / static_cast<double>(row1) : 0.0;
-  const double pi =
-      (total > 0) ? static_cast<double>(r.n01 + r.n11) / static_cast<double>(total)
-                  : 0.0;
+  r.pi01 =
+      (row0 > 0) ? static_cast<double>(r.n01) / static_cast<double>(row0) : 0.0;
+  r.pi11 =
+      (row1 > 0) ? static_cast<double>(r.n11) / static_cast<double>(row1) : 0.0;
+  const double pi = (total > 0) ? static_cast<double>(r.n01 + r.n11) /
+                                      static_cast<double>(total)
+                                : 0.0;
 
   // Null: exceptions are i.i.d. with probability pi.
   // Alternative: first-order Markov with separate pi01 and pi11.
-  const double ll_null = n_log_p(r.n00 + r.n10, 1.0 - pi) + n_log_p(r.n01 + r.n11, pi);
+  const double ll_null =
+      n_log_p(r.n00 + r.n10, 1.0 - pi) + n_log_p(r.n01 + r.n11, pi);
   const double ll_alt = n_log_p(r.n00, 1.0 - r.pi01) + n_log_p(r.n01, r.pi01) +
                         n_log_p(r.n10, 1.0 - r.pi11) + n_log_p(r.n11, r.pi11);
   r.lr_independence = -2.0 * (ll_null - ll_alt);
@@ -189,15 +197,19 @@ ChristoffersenResult christoffersen(const Eigen::VectorXd& returns,
   r.lr_conditional_coverage = k.lr_statistic + r.lr_independence;
   r.p_value_conditional_coverage = chi_square_sf(r.lr_conditional_coverage, 2);
   // chi2(2) at 95%.
-  r.reject_conditional_coverage_at_95 = r.lr_conditional_coverage > 5.991464547107979;
+  r.reject_conditional_coverage_at_95 =
+      r.lr_conditional_coverage > 5.991464547107979;
   return r;
 }
 
 const char* to_string(BaselZone zone) {
   switch (zone) {
-    case BaselZone::Green: return "green";
-    case BaselZone::Yellow: return "yellow";
-    case BaselZone::Red: return "red";
+    case BaselZone::Green:
+      return "green";
+    case BaselZone::Yellow:
+      return "yellow";
+    case BaselZone::Red:
+      return "red";
   }
   return "unknown";
 }
@@ -271,9 +283,8 @@ AcerbiSzekelyResult acerbi_szekely(const Eigen::VectorXd& returns,
         ++hits;
       }
     }
-    const double z1 =
-        (hits > 0) ? acc / static_cast<double>(hits) + 1.0
-                   : std::numeric_limits<double>::quiet_NaN();
+    const double z1 = (hits > 0) ? acc / static_cast<double>(hits) + 1.0
+                                 : std::numeric_limits<double>::quiet_NaN();
     const double z2 = acc / (static_cast<double>(x.size()) * p) + 1.0;
     return std::tuple<double, double, long>{z1, z2, hits};
   };
