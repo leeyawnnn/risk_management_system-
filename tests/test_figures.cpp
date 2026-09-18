@@ -308,6 +308,42 @@ TEST_CASE("estimator error figure draws one labelled line per estimator",
   CHECK(svg.find("<polygon") != std::string::npos);
 }
 
+TEST_CASE("eigenvalue spectrum figure names the estimator that is furthest off",
+          "[figures][honesty]") {
+  // The truth spans two decades; Ledoit-Wolf lifts the smallest eigenvalue
+  // and Sample sits close to it.
+  std::vector<SpectrumPoint> points;
+  const std::vector<double> truth = {1e-6, 5e-6, 2e-5, 1e-4};
+  for (std::size_t i = 0; i < truth.size(); ++i) {
+    const int idx = static_cast<int>(i);
+    points.push_back({"Sample", idx, truth[i] * 0.98, truth[i]});
+    points.push_back(
+        {"Ledoit-Wolf", idx, truth[i] * (i == 0 ? 3.0 : 1.05), truth[i]});
+  }
+  const std::string svg = svg_eigenvalue_spectrum(points, 60, kSource);
+  CHECK(well_formed(svg));
+  CHECK(carries_source(svg, kSource));
+  CHECK(svg.find("truth") != std::string::npos);
+  CHECK(svg.find("Ledoit-Wolf lifts the smallest eigenvalue 3.0x") !=
+        std::string::npos);
+  CHECK(svg.find("condition number") != std::string::npos);
+
+  // When every estimator recovers the spectrum the title must say so rather
+  // than keeping the dramatic version.
+  std::vector<SpectrumPoint> accurate;
+  for (std::size_t i = 0; i < truth.size(); ++i) {
+    accurate.push_back(
+        {"Sample", static_cast<int>(i), truth[i] * 1.01, truth[i]});
+  }
+  CHECK(svg_eigenvalue_spectrum(accurate, 1260, kSource)
+            .find("Every estimator recovers the spectrum") !=
+        std::string::npos);
+}
+
+TEST_CASE("eigenvalue spectrum figure tolerates no data", "[figures]") {
+  CHECK(well_formed(svg_eigenvalue_spectrum({}, 60, kSource)));
+}
+
 TEST_CASE("estimator error figure tolerates no data", "[figures]") {
   const std::string svg = svg_estimator_error({}, "y", "title", kSource);
   CHECK(well_formed(svg));
@@ -459,6 +495,17 @@ TEST_CASE("every figure keeps its content inside the canvas",
     const auto c = christoffersen(r, 0.004, 0.95);
     const auto b = basel_traffic_light(r, 0.004, 0.95, 250);
     check_inside_canvas(svg_var_backtest(r, 0.004, 0.95, k, c, b, kSource));
+  }
+  SECTION("eigenvalue spectrum") {
+    std::vector<SpectrumPoint> points;
+    const std::vector<double> truth = {1e-6, 5e-6, 2e-5, 1e-4};
+    for (std::size_t i = 0; i < truth.size(); ++i) {
+      points.push_back(
+          {"Sample", static_cast<int>(i), truth[i] * 1.4, truth[i]});
+      points.push_back(
+          {"Ledoit-Wolf", static_cast<int>(i), truth[i] * 0.8, truth[i]});
+    }
+    check_inside_canvas(svg_eigenvalue_spectrum(points, 60, kSource));
   }
   SECTION("estimator error") {
     std::vector<EstimatorErrorPoint> points;

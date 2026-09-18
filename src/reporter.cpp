@@ -6,6 +6,7 @@
 #include <cmath>
 #include <fstream>
 #include <iomanip>
+#include <map>
 #include <random>
 #include <ranges>
 #include <sstream>
@@ -793,6 +794,8 @@ std::string to_markdown(const RiskReport& rep) {
       {"factor_risk.svg", "Variance split across factors and specific risk."},
       {"estimator_error.svg",
        "Estimator error against a known covariance, by sample size."},
+      {"eigenvalue_spectrum.svg",
+       "Estimated eigenvalue spectrum against the true one."},
   };
   for (const auto& f : figs) {
     m << "**" << f.caption << "**\n\n![" << f.caption << "](figures/" << f.file
@@ -816,8 +819,42 @@ void write_reports(const RiskReport& rep, const std::string& dir) {
   md << to_markdown(rep);
 }
 
+namespace {
+
+// Read a CSV into header-keyed rows. Returns empty on any problem, because
+// every caller treats a missing study as "skip that one figure".
+std::vector<std::map<std::string, std::string>> read_csv(
+    const std::string& path) {
+  std::ifstream in(path);
+  if (!in) return {};
+  std::string line;
+  if (!std::getline(in, line)) return {};
+  std::vector<std::string> header;
+  {
+    std::stringstream hs(line);
+    std::string f;
+    while (std::getline(hs, f, ',')) header.push_back(f);
+  }
+  std::vector<std::map<std::string, std::string>> rows;
+  while (std::getline(in, line)) {
+    if (line.empty()) continue;
+    std::stringstream ls(line);
+    std::string cell;
+    std::map<std::string, std::string> row;
+    std::size_t i = 0;
+    while (std::getline(ls, cell, ',') && i < header.size()) {
+      row[header[i++]] = cell;
+    }
+    if (i == header.size()) rows.push_back(std::move(row));
+  }
+  return rows;
+}
+
+}  // namespace
+
 void write_all_figures(const RiskReport& rep, const std::string& dir,
-                       const std::string& estimator_csv) {
+                       const std::string& estimator_csv,
+                       const std::string& spectrum_csv) {
   auto dump = [&](const std::string& file, const std::string& content) {
     std::ofstream out(dir + "/" + file);
     if (!out) {
@@ -886,52 +923,66 @@ void write_all_figures(const RiskReport& rep, const std::string& dir,
          svg_factor_decomposition(rep.factor_decomposition, source));
   }
 
-  // The estimator figure is driven by the separate study executable. When its
-  // CSV is absent this one figure is skipped and the rest still render, so a
-  // fresh clone that has not run the study still gets a report.
-  if (estimator_csv.empty()) return;
-  std::ifstream in(estimator_csv);
-  if (!in) return;
+  // The estimator figures are driven by the separate study executable. When
+  // its output is absent those figures are skipped and the rest still
+  // render, so a fresh clone that has not run the study still gets a report.
+  const std::string study_source =
+      "Source: apps/estimator_study.cpp, simulated from a factor model "
+      "fitted to the FRED sample. 400 replications per point.";
 
-  std::string line;
-  if (!std::getline(in, line)) return;
-  std::vector<std::string> header;
-  {
-    std::stringstream hs(line);
-    std::string f;
-    while (std::getline(hs, f, ',')) header.push_back(f);
-  }
-  auto column_of = [&](const std::string& want) -> std::size_t {
-    for (std::size_t i = 0; i < header.size(); ++i) {
-      if (header[i] == want) return i;
+  std::vector<EstimatorErrorPoint> error_points;
+  for (const auto& row : read_csv(estimator_csv)) {
+    auto est = row.find("estimator");
+    auto n = row.find("sample_size");
+    auto err = row.find("var99_abs_error");
+    auto se = row.find("var99_abs_error_se");
+    if (est == row.end() || n == row.end() || err == row.end() ||
+        se == row.end()) {
+      continue;
     }
-    throw std::invalid_argument("estimator CSV missing column " + want);
-  };
-  const std::size_t c_est = column_of("estimator");
-  const std::size_t c_n = column_of("sample_size");
-  const std::size_t c_err = column_of("var99_abs_error");
-  const std::size_t c_se = column_of("var99_abs_error_se");
-  const std::size_t widest = std::max({c_est, c_n, c_err, c_se});
-
-  std::vector<EstimatorErrorPoint> points;
-  while (std::getline(in, line)) {
-    if (line.empty()) continue;
-    std::vector<std::string> f;
-    std::stringstream ls(line);
-    std::string cell;
-    while (std::getline(ls, cell, ',')) f.push_back(cell);
-    if (f.size() <= widest) continue;
-    points.push_back(
-        {f[c_est], std::stoi(f[c_n]), std::stod(f[c_err]), std::stod(f[c_se])});
+    error_points.push_back({est->second, std::stoi(n->second),
+                            std::stod(err->second), std::stod(se->second)});
   }
-  if (points.empty()) return;
+  if (!error_points.empty()) {
+    dump("estimator_error.svg",
+         svg_estimator_error(
+             error_points, "mean absolute 99% VaR error",
+             "More history helps the sample estimator and does nothing for "
+             "EWMA",
+             study_source));
+  }
 
-  dump("estimator_error.svg",
-       svg_estimator_error(
-           points, "mean absolute 99% VaR error",
-           "More history helps the sample estimator and does nothing for EWMA",
-           "Source: apps/estimator_study.cpp, simulated from a factor model "
-           "fitted to the FRED sample. 400 replications per point."));
+  // The spectrum figure uses the SMALLEST sample size present. At 1,260
+  // observations all three estimators recover the spectrum and the chart
+  // shows three lines on top of each other; the short sample is where the
+  // difference between them exists and where a reader learns something.
+  const auto spectrum_rows = read_csv(spectrum_csv);
+  if (!spectrum_rows.empty()) {
+    int smallest = std::numeric_limits<int>::max();
+    for (const auto& row : spectrum_rows) {
+      auto n = row.find("sample_size");
+      if (n != row.end()) smallest = std::min(smallest, std::stoi(n->second));
+    }
+    std::vector<SpectrumPoint> points;
+    for (const auto& row : spectrum_rows) {
+      auto n = row.find("sample_size");
+      auto est = row.find("estimator");
+      auto idx = row.find("index");
+      auto val = row.find("estimated_eigenvalue");
+      auto tru = row.find("true_eigenvalue");
+      if (n == row.end() || est == row.end() || idx == row.end() ||
+          val == row.end() || tru == row.end()) {
+        continue;
+      }
+      if (std::stoi(n->second) != smallest) continue;
+      points.push_back({est->second, std::stoi(idx->second),
+                        std::stod(val->second), std::stod(tru->second)});
+    }
+    if (!points.empty()) {
+      dump("eigenvalue_spectrum.svg",
+           svg_eigenvalue_spectrum(points, smallest, study_source));
+    }
+  }
 }
 
 }  // namespace risk

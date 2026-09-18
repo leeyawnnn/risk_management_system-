@@ -140,7 +140,7 @@ that gets there, and reporting the answer as a distance in standard deviations.
 
 ## Figures
 
-All eight regenerate from `./scripts/build_reports.sh`.
+All nine regenerate from `./scripts/build_reports.sh`.
 
 **Correlations cluster into blocks.** Rows and columns are ordered by
 average-linkage clustering on `1 − ρ`, so the structure emerges from the data
@@ -175,6 +175,15 @@ Ledoit-Wolf fall from 8.7bp to 1.9bp as the sample grows; EWMA sits flat near
 effective sample size.
 
 ![Estimator error against sample size](reports/figures/estimator_error.svg)
+
+**Shrinkage lifts the small eigenvalues past the truth.** Mean estimated
+eigenvalue against the known one at n=60, log scale, ordered smallest to
+largest. Read the left-hand end: the sample estimator sits slightly below the
+truth and Ledoit-Wolf sits 3.4× above it. That overshoot *is* the mechanism —
+shrinkage compresses the spectrum toward its average, which is what buys the
+conditioning improvement and what costs accuracy on any individual eigenvalue.
+
+![Estimated eigenvalue spectrum against the truth](reports/figures/eigenvalue_spectrum.svg)
 
 **The loss tail is heavier than a normal of the same variance.** Daily returns
 against the fitted normal density, with VaR and CVaR marked and breaching bins

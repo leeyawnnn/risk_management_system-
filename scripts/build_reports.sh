@@ -35,7 +35,8 @@ echo "==> risk report and figures"
   --data data/returns/ \
   --factors data/factors.csv \
   --output reports/ \
-  --estimator-csv reports/estimator_study.csv
+  --estimator-csv reports/estimator_study.csv \
+  --spectrum-csv reports/estimator_spectrum.csv
 
 echo
 echo "==> reports/ regenerated"

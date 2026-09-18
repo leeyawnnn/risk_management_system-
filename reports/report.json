@@ -912,7 +912,7 @@
     "annualization_factor": 252.0,
     "as_of": "2026-09-11",
     "covariance_method": "ledoit_wolf",
-    "git_commit": "f15b832cf4",
+    "git_commit": "ad6766e5b5",
     "portfolio_name": "Multi-Asset Book",
     "seed": 42
   },

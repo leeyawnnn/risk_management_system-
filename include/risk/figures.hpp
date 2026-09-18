@@ -72,6 +72,22 @@ std::string svg_estimator_error(const std::vector<EstimatorErrorPoint>& points,
                                 const std::string& title,
                                 const std::string& source);
 
+// One estimator's mean estimated eigenvalue against the truth, at one
+// sample size.
+struct SpectrumPoint {
+  std::string estimator;
+  int index = 0;  // 0 = smallest
+  double estimated = 0.0;
+  double truth = 0.0;
+};
+
+// Estimated eigenvalue spectrum against the true one, log y. This is the
+// picture behind "shrinkage improves conditioning": the sample estimator
+// pushes the smallest eigenvalues down and the largest up, and shrinkage
+// pulls both back toward the truth.
+std::string svg_eigenvalue_spectrum(const std::vector<SpectrumPoint>& points,
+                                    int sample_size, const std::string& source);
+
 // Daily returns against the VaR line with exceptions marked, the Basel zone
 // as a background band over the trailing supervisory window, and the
 // Kupiec/Christoffersen results in an annotation box.

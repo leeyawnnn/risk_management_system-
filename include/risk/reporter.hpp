@@ -134,6 +134,7 @@ void write_reports(const RiskReport& report, const std::string& dir);
 // path to the output of the estimator study; when it is missing or
 // unreadable that one figure is skipped and the rest are still written.
 void write_all_figures(const RiskReport& report, const std::string& dir,
-                       const std::string& estimator_csv = "");
+                       const std::string& estimator_csv = "",
+                       const std::string& spectrum_csv = "");
 
 }  // namespace risk

@@ -182,6 +182,22 @@ def main() -> int:
             "sample size"
         )
 
+    # The spectrum figure's headline is computed inside the figure, so check
+    # the README quotes the same multiple the study produces.
+    spectrum = REPO / "reports" / "estimator_spectrum.csv"
+    if spectrum.exists():
+        rows = [r for r in csv.DictReader(spectrum.open())]
+        smallest = min(int(r["sample_size"]) for r in rows)
+        lw = next(
+            r
+            for r in rows
+            if r["estimator"] == "Ledoit-Wolf"
+            and int(r["sample_size"]) == smallest
+            and int(r["index"]) == 0
+        )
+        ratio = float(lw["estimated_eigenvalue"]) / float(lw["true_eigenvalue"])
+        c.must_say("spectrum overshoot", f"{ratio:.1f}\u00d7 above it")
+
     # --- concentration and factor decomposition ------------------------------
     conc = report["volatility_attribution"]["concentration"]
     c.must_say("effective bets", f"{conc['effective_num_bets']:.1f} across 11")

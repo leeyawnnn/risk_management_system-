@@ -709,6 +709,162 @@ std::string svg_estimator_error(const std::vector<EstimatorErrorPoint>& points,
 }
 
 // ---------------------------------------------------------------------------
+// Eigenvalue spectrum
+// ---------------------------------------------------------------------------
+
+std::string svg_eigenvalue_spectrum(const std::vector<SpectrumPoint>& points,
+                                    int sample_size,
+                                    const std::string& source) {
+  // The headline is what each estimator does to the SMALLEST eigenvalue:
+  // that direction sets the condition number and it is the one a short
+  // sample gets worst. Computed from the data, not asserted, so the caption
+  // cannot outlive the result.
+  double worst_ratio = 1.0;
+  std::string worst_name;
+  for (const auto& p : points) {
+    if (p.index != 0 || !(p.truth > 0.0) || !(p.estimated > 0.0)) continue;
+    const double ratio = p.estimated / p.truth;
+    if (std::abs(std::log(ratio)) > std::abs(std::log(worst_ratio))) {
+      worst_ratio = ratio;
+      worst_name = p.estimator;
+    }
+  }
+  std::ostringstream title;
+  if (!worst_name.empty() && worst_ratio > 1.05) {
+    title << worst_name << " lifts the smallest eigenvalue "
+          << plot::fixed(worst_ratio, 1) << "x above the truth";
+  } else if (!worst_name.empty() && worst_ratio < 0.95) {
+    title << worst_name << " pushes the smallest eigenvalue "
+          << plot::fixed((1.0 - worst_ratio) * 100.0, 0) << "% below the truth";
+  } else {
+    title << "Every estimator recovers the spectrum at this sample size";
+  }
+
+  std::ostringstream sub;
+  sub << "Mean estimated eigenvalue against the truth at n = " << sample_size
+      << " observations, log scale. Ordered smallest to largest; the smallest "
+         "is the one that sets the condition number.";
+  Figure fig(title.str(), sub.str(), plot::kDefaultWidth, plot::kDefaultHeight);
+  fig.set_margins(104.0, 190.0, 92.0, 82.0);
+  if (points.empty()) return fig.str(source);
+
+  std::vector<std::string> estimators;
+  int max_index = 0;
+  double lo = std::numeric_limits<double>::infinity();
+  double hi = 0.0;
+  for (const auto& p : points) {
+    if (std::ranges::find(estimators, p.estimator) == estimators.end()) {
+      estimators.push_back(p.estimator);
+    }
+    max_index = std::max(max_index, p.index);
+    for (double v : {p.estimated, p.truth}) {
+      if (v > 0.0) {
+        lo = std::min(lo, v);
+        hi = std::max(hi, v);
+      }
+    }
+  }
+  if (!(hi > 0.0) || !std::isfinite(lo)) return fig.str(source);
+
+  const double log_lo = std::log10(lo) - 0.15;
+  const double log_hi = std::log10(hi) + 0.15;
+  const Scale x{.domain_lo = 0.0,
+                .domain_hi = static_cast<double>(max_index),
+                .range_lo = fig.plot_left(),
+                .range_hi = fig.plot_right()};
+  const Scale y{.domain_lo = log_lo,
+                .domain_hi = log_hi,
+                .range_lo = fig.plot_bottom(),
+                .range_hi = fig.plot_top()};
+
+  for (int e = static_cast<int>(std::floor(log_lo));
+       e <= static_cast<int>(std::ceil(log_hi)); ++e) {
+    for (int m = 1; m <= 9; ++m) {
+      const double v = std::log10(m * std::pow(10.0, e));
+      if (v < log_lo || v > log_hi) continue;
+      fig.line(fig.plot_left(), y(v), fig.plot_right(), y(v), plot::kGrid,
+               m == 1 ? 1.0 : 0.5);
+      if (m == 1) {
+        std::ostringstream lab;
+        lab << "1e" << e;
+        fig.text(fig.plot_left() - 9.0, y(v) + 3.5, lab.str(), plot::kTickSize,
+                 plot::kMutedInk, "end");
+      }
+    }
+  }
+  fig.line(fig.plot_left(), fig.plot_top(), fig.plot_left(), fig.plot_bottom(),
+           plot::kAxis, 1.0);
+  fig.line(fig.plot_left(), fig.plot_bottom(), fig.plot_right(),
+           fig.plot_bottom(), plot::kAxis, 1.0);
+  for (int i = 0; i <= max_index; ++i) {
+    fig.text(x(i), fig.plot_bottom() + 17.0, std::to_string(i + 1),
+             plot::kTickSize, plot::kMutedInk, "middle");
+  }
+  fig.text((fig.plot_left() + fig.plot_right()) / 2.0, fig.plot_bottom() + 40.0,
+           "eigenvalue rank, smallest to largest", plot::kAxisLabelSize,
+           plot::kInk, "middle");
+  {
+    std::ostringstream os;
+    os << R"SVG(<text transform="translate(26,)SVG"
+       << plot::fixed((fig.plot_top() + fig.plot_bottom()) / 2.0, 2)
+       << R"SVG() rotate(-90)" font-size=")SVG"
+       << plot::fixed(plot::kAxisLabelSize, 1) << R"SVG(" fill=")SVG"
+       << plot::kInk << R"SVG(" text-anchor="middle">)SVG"
+       << "eigenvalue of the daily covariance (log scale)" << "</text>\n";
+    fig.raw(os.str());
+  }
+
+  // The truth first, as a heavy dark reference line, so every estimator is
+  // read as a departure from it rather than as one more series.
+  std::vector<std::pair<double, double>> truth;
+  for (int i = 0; i <= max_index; ++i) {
+    for (const auto& p : points) {
+      if (p.index == i && p.truth > 0.0) {
+        truth.emplace_back(x(i), y(std::log10(p.truth)));
+        break;
+      }
+    }
+  }
+  fig.polyline(truth, plot::kInk, 2.6);
+  std::vector<double> label_ys;
+  if (!truth.empty()) {
+    const double ty = truth.back().second + 3.5;
+    fig.text(truth.back().first + 12.0, ty, "truth", plot::kAnnotationSize,
+             plot::kInk, "start");
+    // Seed the collision list so an estimator label cannot land on top of
+    // the reference line's label.
+    label_ys.push_back(ty);
+  }
+
+  for (std::size_t e = 0; e < estimators.size(); ++e) {
+    const std::string& name = estimators[e];
+    const std::string color = plot::categorical_color(e);
+    std::vector<std::pair<double, double>> line;
+    for (int i = 0; i <= max_index; ++i) {
+      for (const auto& p : points) {
+        if (p.estimator == name && p.index == i && p.estimated > 0.0) {
+          line.emplace_back(x(i), y(std::log10(p.estimated)));
+          break;
+        }
+      }
+    }
+    if (line.empty()) continue;
+    fig.polyline(line, color, 1.8, "none");
+    for (const auto& [px, py] : line) fig.circle(px, py, 3.0, color);
+
+    double label_y = line.back().second + 3.5;
+    for (double used : label_ys) {
+      if (std::abs(label_y - used) < 12.0) label_y = used + 12.0;
+    }
+    label_ys.push_back(label_y);
+    fig.text(line.back().first + 12.0, label_y, name, plot::kAnnotationSize,
+             color, "start");
+  }
+
+  return fig.str(source);
+}
+
+// ---------------------------------------------------------------------------
 // VaR backtest
 // ---------------------------------------------------------------------------
 

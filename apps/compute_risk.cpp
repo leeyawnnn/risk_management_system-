@@ -36,6 +36,7 @@ struct Args {
   std::string factors = "data/factors.csv";
   std::string output = "output/";
   std::string estimator_csv;
+  std::string spectrum_csv;
   std::string as_of;
   std::string git_commit;
   std::uint64_t seed = 0;
@@ -51,7 +52,8 @@ void usage() {
       << "  --data DIR         return CSV directory (default data/returns/)\n"
       << "  --factors FILE     factor series (default data/factors.csv)\n"
       << "  --output DIR       output directory (default output/)\n"
-      << "  --estimator-csv F  estimator study output, for that one figure\n"
+      << "  --estimator-csv F  estimator study output, for that figure\n"
+      << "  --spectrum-csv F   eigenvalue spectrum output, for that figure\n"
       << "  --seed N           RNG seed; overrides the config\n"
       << "  --as-of DATE       data as-of date stamped into every artifact.\n"
       << "                     Defaults to the as_of in data/manifest.json.\n"
@@ -121,6 +123,8 @@ int main(int argc, char** argv) try {
       args.output = next("--output");
     } else if (s == "--estimator-csv") {
       args.estimator_csv = next("--estimator-csv");
+    } else if (s == "--spectrum-csv") {
+      args.spectrum_csv = next("--spectrum-csv");
     } else if (s == "--seed") {
       args.seed = std::stoull(next("--seed"));
       args.seed_set = true;
@@ -222,7 +226,7 @@ int main(int argc, char** argv) try {
   fs::create_directories(fs::path(args.output) / "figures");
   write_reports(rep, args.output);
   write_all_figures(rep, (fs::path(args.output) / "figures").string(),
-                    args.estimator_csv);
+                    args.estimator_csv, args.spectrum_csv);
 
   // ---- console summary -----------------------------------------------------
   std::cout << "\n=== " << cfg.name << " ===\n"

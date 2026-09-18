@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Data as-of | 2026-09-11 |
-| Code commit | f15b832cf4 |
+| Code commit | ad6766e5b5 |
 | Seed | 42 |
 | Notional | $25,000,000 |
 | Covariance estimator | ledoit_wolf |
@@ -223,4 +223,8 @@ These are single-session moves. The Gaussian probability is what a normal factor
 **Estimator error against a known covariance, by sample size.**
 
 ![Estimator error against a known covariance, by sample size.](figures/estimator_error.svg)
+
+**Estimated eigenvalue spectrum against the true one.**
+
+![Estimated eigenvalue spectrum against the true one.](figures/eigenvalue_spectrum.svg)
 

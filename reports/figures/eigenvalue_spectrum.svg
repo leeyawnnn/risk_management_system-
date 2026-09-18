@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="750" viewBox="0 0 1200 750" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, 'Liberation Sans', sans-serif">
+<rect width="1200" height="750" fill="#ffffff"/>
+<text x="36" y="34" font-size="15.0" font-weight="600" fill="#1a1a1a">Ledoit-Wolf lifts the smallest eigenvalue 3.4x above the truth</text>
+<text x="36" y="53" font-size="11.0" fill="#5a5a5a">Mean estimated eigenvalue against the truth at n = 60 observations, log scale. Ordered smallest to largest; the smallest is the one that sets the condition number.</text>
+<line x1="104.00" y1="628.64" x2="1010.00" y2="628.64" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="603.18" x2="1010.00" y2="603.18" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="585.11" x2="1010.00" y2="585.11" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="571.10" x2="1010.00" y2="571.10" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="559.65" x2="1010.00" y2="559.65" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="549.97" x2="1010.00" y2="549.97" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="541.59" x2="1010.00" y2="541.59" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="534.19" x2="1010.00" y2="534.19" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="527.57" x2="1010.00" y2="527.57" stroke="#e4e4e4" stroke-width="1.00"/>
+<text x="95.00" y="531.07" font-size="10.0" fill="#5a5a5a" text-anchor="end">1e-6</text>
+<line x1="104.00" y1="484.05" x2="1010.00" y2="484.05" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="458.58" x2="1010.00" y2="458.58" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="440.52" x2="1010.00" y2="440.52" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="426.51" x2="1010.00" y2="426.51" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="415.06" x2="1010.00" y2="415.06" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="405.38" x2="1010.00" y2="405.38" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="396.99" x2="1010.00" y2="396.99" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="389.59" x2="1010.00" y2="389.59" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="382.98" x2="1010.00" y2="382.98" stroke="#e4e4e4" stroke-width="1.00"/>
+<text x="95.00" y="386.48" font-size="10.0" fill="#5a5a5a" text-anchor="end">1e-5</text>
+<line x1="104.00" y1="339.45" x2="1010.00" y2="339.45" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="313.99" x2="1010.00" y2="313.99" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="295.92" x2="1010.00" y2="295.92" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="281.91" x2="1010.00" y2="281.91" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="270.46" x2="1010.00" y2="270.46" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="260.78" x2="1010.00" y2="260.78" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="252.40" x2="1010.00" y2="252.40" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="245.00" x2="1010.00" y2="245.00" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="238.38" x2="1010.00" y2="238.38" stroke="#e4e4e4" stroke-width="1.00"/>
+<text x="95.00" y="241.88" font-size="10.0" fill="#5a5a5a" text-anchor="end">1e-4</text>
+<line x1="104.00" y1="194.86" x2="1010.00" y2="194.86" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="169.40" x2="1010.00" y2="169.40" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="151.33" x2="1010.00" y2="151.33" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="137.32" x2="1010.00" y2="137.32" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="125.87" x2="1010.00" y2="125.87" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="116.19" x2="1010.00" y2="116.19" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="107.80" x2="1010.00" y2="107.80" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="100.41" x2="1010.00" y2="100.41" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="93.79" x2="1010.00" y2="93.79" stroke="#e4e4e4" stroke-width="1.00"/>
+<text x="95.00" y="97.29" font-size="10.0" fill="#5a5a5a" text-anchor="end">1e-3</text>
+<line x1="104.00" y1="92.00" x2="104.00" y2="668.00" stroke="#4a4a4a" stroke-width="1.00"/>
+<line x1="104.00" y1="668.00" x2="1010.00" y2="668.00" stroke="#4a4a4a" stroke-width="1.00"/>
+<text x="104.00" y="685.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">1</text>
+<text x="194.60" y="685.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">2</text>
+<text x="285.20" y="685.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">3</text>
+<text x="375.80" y="685.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">4</text>
+<text x="466.40" y="685.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">5</text>
+<text x="557.00" y="685.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">6</text>
+<text x="647.60" y="685.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">7</text>
+<text x="738.20" y="685.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">8</text>
+<text x="828.80" y="685.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">9</text>
+<text x="919.40" y="685.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">10</text>
+<text x="1010.00" y="685.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">11</text>
+<text x="557.00" y="708.00" font-size="12.0" fill="#1a1a1a" text-anchor="middle">eigenvalue rank, smallest to largest</text>
+<text transform="translate(26,380.00) rotate(-90)" font-size="12.0" fill="#1a1a1a" text-anchor="middle">eigenvalue of the daily covariance (log scale)</text>
+<polyline points="104.00,621.60 194.60,499.39 285.20,464.12 375.80,444.50 466.40,424.25 557.00,396.56 647.60,352.14 738.20,316.67 828.80,196.63 919.40,150.48 1010.00,117.60 " fill="none" stroke="#1a1a1a" stroke-width="2.60" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1022.00" y="121.10" font-size="9.0" fill="#1a1a1a" text-anchor="start">truth</text>
+<polyline points="104.00,633.55 194.60,514.34 285.20,478.25 375.80,453.13 466.40,429.06 557.00,399.20 647.60,356.19 738.20,318.06 828.80,200.21 919.40,151.17 1010.00,114.76 " fill="none" stroke="#0072b2" stroke-width="1.80" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="104.00" cy="633.55" r="3.00" fill="#0072b2"/>
+<circle cx="194.60" cy="514.34" r="3.00" fill="#0072b2"/>
+<circle cx="285.20" cy="478.25" r="3.00" fill="#0072b2"/>
+<circle cx="375.80" cy="453.13" r="3.00" fill="#0072b2"/>
+<circle cx="466.40" cy="429.06" r="3.00" fill="#0072b2"/>
+<circle cx="557.00" cy="399.20" r="3.00" fill="#0072b2"/>
+<circle cx="647.60" cy="356.19" r="3.00" fill="#0072b2"/>
+<circle cx="738.20" cy="318.06" r="3.00" fill="#0072b2"/>
+<circle cx="828.80" cy="200.21" r="3.00" fill="#0072b2"/>
+<circle cx="919.40" cy="151.17" r="3.00" fill="#0072b2"/>
+<circle cx="1010.00" cy="114.76" r="3.00" fill="#0072b2"/>
+<text x="1022.00" y="133.10" font-size="9.0" fill="#0072b2" text-anchor="start">Sample</text>
+<polyline points="104.00,646.31 194.60,530.26 285.20,491.79 375.80,463.47 466.40,436.62 557.00,404.72 647.60,362.15 738.20,320.81 828.80,205.75 919.40,154.88 1010.00,113.69 " fill="none" stroke="#d55e00" stroke-width="1.80" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="104.00" cy="646.31" r="3.00" fill="#d55e00"/>
+<circle cx="194.60" cy="530.26" r="3.00" fill="#d55e00"/>
+<circle cx="285.20" cy="491.79" r="3.00" fill="#d55e00"/>
+<circle cx="375.80" cy="463.47" r="3.00" fill="#d55e00"/>
+<circle cx="466.40" cy="436.62" r="3.00" fill="#d55e00"/>
+<circle cx="557.00" cy="404.72" r="3.00" fill="#d55e00"/>
+<circle cx="647.60" cy="362.15" r="3.00" fill="#d55e00"/>
+<circle cx="738.20" cy="320.81" r="3.00" fill="#d55e00"/>
+<circle cx="828.80" cy="205.75" r="3.00" fill="#d55e00"/>
+<circle cx="919.40" cy="154.88" r="3.00" fill="#d55e00"/>
+<circle cx="1010.00" cy="113.69" r="3.00" fill="#d55e00"/>
+<text x="1022.00" y="145.10" font-size="9.0" fill="#d55e00" text-anchor="start">EWMA</text>
+<polyline points="104.00,544.80 194.60,447.15 285.20,407.54 375.80,393.69 466.40,364.84 557.00,347.42 647.60,327.66 738.20,309.29 828.80,205.64 919.40,155.98 1010.00,116.72 " fill="none" stroke="#009e73" stroke-width="1.80" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="104.00" cy="544.80" r="3.00" fill="#009e73"/>
+<circle cx="194.60" cy="447.15" r="3.00" fill="#009e73"/>
+<circle cx="285.20" cy="407.54" r="3.00" fill="#009e73"/>
+<circle cx="375.80" cy="393.69" r="3.00" fill="#009e73"/>
+<circle cx="466.40" cy="364.84" r="3.00" fill="#009e73"/>
+<circle cx="557.00" cy="347.42" r="3.00" fill="#009e73"/>
+<circle cx="647.60" cy="327.66" r="3.00" fill="#009e73"/>
+<circle cx="738.20" cy="309.29" r="3.00" fill="#009e73"/>
+<circle cx="828.80" cy="205.64" r="3.00" fill="#009e73"/>
+<circle cx="919.40" cy="155.98" r="3.00" fill="#009e73"/>
+<circle cx="1010.00" cy="116.72" r="3.00" fill="#009e73"/>
+<text x="1022.00" y="157.10" font-size="9.0" fill="#009e73" text-anchor="start">Ledoit-Wolf</text>
+<text x="36" y="736" font-size="8.0" font-style="italic" fill="#8a8a8a">Source: apps/estimator_study.cpp, simulated from a factor model fitted to the FRED sample. 400 replications per point.</text>
+</svg>
