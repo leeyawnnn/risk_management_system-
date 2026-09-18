@@ -167,6 +167,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Pinned via pip rather than apt. Formatting output changes between
+      # LLVM releases, so an unpinned tool makes the job fail on code nobody
+      # edited -- and it has to be the same version a contributor can install
+      # locally, which the pip distribution is and a runner's apt package
+      # is not.
+      - name: Install clang-format 18.1.8
+        run: pipx install clang-format==18.1.8
+
       - name: Check formatting
         run: |
           clang-format --version
@@ -189,11 +198,14 @@ jobs:
       # readability-*) and every LLVM release adds checks to them. With an
       # unpinned clang-tidy the job would start failing on code nobody
       # touched, so the version is fixed here and bumped deliberately.
-      - name: Install clang-tidy 18
+      # Pinned for the same reason as clang-format: .clang-tidy enables whole
+      # check groups and every LLVM release adds to them, so an unpinned tool
+      # starts failing on untouched code. pip ships the exact version a
+      # contributor can reproduce locally.
+      - name: Install clang-tidy 18.1.8
         run: |
-          sudo apt-get update
-          sudo apt-get install -y clang-tidy-18
-          echo "TIDY=clang-tidy-18" >> "$GITHUB_ENV"
+          pipx install clang-tidy==18.1.8
+          echo "TIDY=clang-tidy" >> "$GITHUB_ENV"
 
       - name: Configure (for compile_commands.json)
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug

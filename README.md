@@ -58,6 +58,11 @@ ctest --test-dir build --output-on-failure    # 122 tests
 ./scripts/build_reports.sh                    # regenerates everything in reports/
 ```
 
+Formatting and static analysis are pinned to clang-format and clang-tidy
+18.1.8, installable with `pipx install clang-format==18.1.8`. Both tools
+change their output between LLVM releases, so an unpinned version fails CI on
+code nobody edited.
+
 Dependencies (Eigen 3.4.0, nlohmann/json 3.12.0, Catch2 3.8.1) are fetched
 from pinned release tarballs verified against a SHA256. On a network that
 blocks them, install the three from a package manager and configure
