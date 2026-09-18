@@ -20,7 +20,7 @@ namespace {
 Eigen::VectorXd gaussian_sample(int n, double mu, double sigma,
                                 std::uint64_t seed) {
   std::mt19937_64 gen(seed);
-    Eigen::VectorXd v(n);
+  Eigen::VectorXd v(n);
   for (int i = 0; i < n; ++i) v(i) = risk_test::normal(gen, mu, sigma);
   return v;
 }
@@ -100,8 +100,9 @@ TEST_CASE("on heavy-tailed data parametric underestimates the 99% tail",
   // the divergence is historical-vs-Gaussian, which is the whole point.)
   const int n = 500'000;
   std::mt19937_64 gen(2024);
-    Eigen::VectorXd r(n);
-  for (int i = 0; i < n; ++i) r(i) = 0.01 * risk_test::student_t(gen, 5);  // scale into return units
+  Eigen::VectorXd r(n);
+  for (int i = 0; i < n; ++i)
+    r(i) = 0.01 * risk_test::student_t(gen, 5);  // scale into return units
 
   const double conf = 0.99;
   const double hist = historical_var(r, conf);
@@ -158,7 +159,11 @@ TEST_CASE("VaR input validation", "[var][errors]") {
 // Reproducibility of the random path
 // ---------------------------------------------------------------------------
 
-TEST_CASE("uniform_unit covers [0, 1) without reaching 1",
+// Square brackets are Catch2 tag syntax, so they must not appear in a test
+// NAME: catch_discover_tests parses the name as tags and collapses the whole
+// suite into one bogus entry. That is what broke the offline CI leg, whose
+// packaged Catch2 ships an older discovery script.
+TEST_CASE("uniform_unit covers the unit interval without reaching one",
           "[var][random][reproducibility]") {
   CHECK(risk::uniform_unit(0) == 0.0);
   CHECK(risk::uniform_unit(~std::uint64_t{0}) < 1.0);

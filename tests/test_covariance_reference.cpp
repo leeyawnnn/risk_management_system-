@@ -162,7 +162,7 @@ TEST_CASE("Ledoit-Wolf reproduces equation (5) of the paper from its parts",
   expect_matches(lw.cov, rebuilt);
 }
 
-TEST_CASE("shrinkage intensity stays inside [0, 1]",
+TEST_CASE("shrinkage intensity stays inside the unit interval",
           "[covariance][reference]") {
   // The clip in equation (5) is not decoration: kappa/T runs outside [0, 1]
   // for short samples, and an unclipped delta would produce a matrix that is
