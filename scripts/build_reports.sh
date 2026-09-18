@@ -5,6 +5,9 @@
 # rebuilds the worked example end to end, and CI then fails if the result
 # differs from what is committed. Output is deterministic -- fixed seeds, and
 # every timestamp comes from the data's as-of date rather than the wall clock.
+#
+# Any extra arguments are forwarded to compute_risk, which is how CI pins the
+# commit stamp -- see --commit below.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -36,7 +39,8 @@ echo "==> risk report and figures"
   --factors data/factors.csv \
   --output reports/ \
   --estimator-csv reports/estimator_study.csv \
-  --spectrum-csv reports/estimator_spectrum.csv
+  --spectrum-csv reports/estimator_spectrum.csv \
+  "$@"
 
 echo
 echo "==> reports/ regenerated"

@@ -211,13 +211,24 @@ jobs:
           cmake --build build -j
 
       - name: Run the full pipeline
-        run: ./scripts/build_reports.sh
+        # Every artifact is stamped with the commit that produced it, and the
+        # committed copy necessarily carries the commit *before* the one that
+        # contains it. Regenerating with that same stamp is what makes the
+        # comparison below a test of the numbers rather than of the SHA.
+        run: |
+          STAMP=$(python3 -c "import json;print(json.load(open('reports/report.json'))['provenance']['git_commit'])")
+          echo "regenerating with the committed stamp: $STAMP"
+          ./scripts/build_reports.sh --commit "$STAMP"
 
       - name: Fail if the committed worked example is stale
+        # The pipeline is deterministic: fixed seeds, no wall-clock, and no
+        # standard-library distribution whose algorithm varies by platform.
+        # A Linux runner must therefore reproduce macOS output byte for byte.
         run: |
           git --no-pager diff --stat -- reports/
           git diff --quiet -- reports/ || {
-            echo "::error::reports/ is out of date. Run scripts/build_reports.sh and commit the result."
+            echo "::error::reports/ is out of date, or the pipeline is not reproducible on this platform. Run scripts/build_reports.sh and commit the result."
+            git --no-pager diff -- reports/ | head -60
             exit 1
           }
 
