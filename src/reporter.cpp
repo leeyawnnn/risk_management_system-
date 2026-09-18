@@ -16,6 +16,7 @@
 #include "risk/covariance.hpp"
 #include "risk/cvar.hpp"
 #include "risk/figures.hpp"
+#include "risk/random.hpp"
 #include "risk/var.hpp"
 
 namespace risk {
@@ -94,7 +95,6 @@ std::pair<double, double> bootstrap_vol_ci(const Eigen::VectorXd& col,
   const auto n = static_cast<std::size_t>(col.size());
   if (n < 8 || resamples < 50) return {0.0, 0.0};
   std::mt19937_64 gen(seed);
-  std::uniform_int_distribution<std::size_t> pick(0, n - 1);
 
   std::vector<double> vols;
   vols.reserve(static_cast<std::size_t>(resamples));
@@ -103,7 +103,7 @@ std::pair<double, double> bootstrap_vol_ci(const Eigen::VectorXd& col,
     double sum = 0.0;
     double sumsq = 0.0;
     for (std::size_t i = 0; i < n; ++i) {
-      const double v = col(static_cast<Eigen::Index>(pick(gen)));
+      const double v = col(static_cast<Eigen::Index>(uniform_below(gen, n)));
       sum += v;
       sumsq += v * v;
     }
@@ -736,9 +736,16 @@ std::string to_markdown(const RiskReport& rep) {
     m << "The most likely factor move reaching each loss, found by minimising "
          "Mahalanobis distance subject to the loss constraint. The distance "
          "column is the answer: how many standard deviations of the book's own "
-         "factor distribution the scenario sits at.\n\n";
-    m << "| Target loss | Target ($) | Distance (sigma) | Gaussian prob. | "
-         "Implied factor move |\n";
+         "one-day factor distribution the scenario sits at.\n\n";
+    m << "These are single-session moves. The Gaussian probability is what a "
+         "normal factor distribution would assign to a move that large, and "
+         "for the deeper rows it is not a forecast: the book's measured "
+         "excess kurtosis of "
+      << num(rep.portfolio_excess_kurtosis, 2)
+      << " means the real tail is far heavier than the normal it is computed "
+         "under. Read the distance, not the probability.\n\n";
+    m << "| Target loss | Target ($) | Distance (daily sigma) | Gaussian "
+         "prob. | Implied factor move |\n";
     m << "|---:|---:|---:|---:|---|\n";
     for (const auto& s : rep.reverse_stress) {
       std::ostringstream moves;

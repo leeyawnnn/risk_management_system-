@@ -1,5 +1,7 @@
 #include "risk/var.hpp"
 
+#include "risk/random.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <random>
@@ -145,15 +147,18 @@ Eigen::VectorXd simulate_portfolio_returns(const Eigen::VectorXd& mean,
   const Eigen::VectorXd c = L.transpose() * weights;
   const double step_drift = weights.dot(mean);
 
+  // Draws come from risk::standard_normal rather than
+  // std::normal_distribution: the latter's algorithm is implementation
+  // defined, so the same seed gives different numbers under libstdc++ and
+  // libc++ and the committed report would not reproduce across platforms.
   std::mt19937_64 gen(seed);
-  std::normal_distribution<double> nd(0.0, 1.0);
 
   Eigen::VectorXd sims(draws);
   Eigen::VectorXd z(N);
   for (int d = 0; d < draws; ++d) {
     double path = 0.0;
     for (int s = 0; s < horizon_days; ++s) {
-      for (Eigen::Index i = 0; i < N; ++i) z(i) = nd(gen);
+      for (Eigen::Index i = 0; i < N; ++i) z(i) = standard_normal(gen);
       path += step_drift + c.dot(z);
     }
     sims(d) = path;

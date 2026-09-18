@@ -8,6 +8,7 @@
 #include <tuple>
 #include <vector>
 
+#include "risk/random.hpp"
 #include "risk/var.hpp"
 
 namespace risk {
@@ -304,11 +305,12 @@ AcerbiSzekelyResult acerbi_szekely(const Eigen::VectorXd& returns,
   // one. The tail of interest is the left one -- a NEGATIVE Z means realised
   // losses beyond VaR were worse than the model said.
   std::mt19937_64 gen(seed);
-  std::normal_distribution<double> nd(mean, stdev);
   long le1 = 0, le2 = 0, defined1 = 0;
   Eigen::VectorXd sim(T);
   for (int s = 0; s < simulations; ++s) {
-    for (Eigen::Index t = 0; t < T; ++t) sim(t) = nd(gen);
+    for (Eigen::Index t = 0; t < T; ++t) {
+      sim(t) = mean + stdev * standard_normal(gen);
+    }
     const auto [s1, s2, shits] = statistics(sim);
     if (shits > 0) {
       ++defined1;

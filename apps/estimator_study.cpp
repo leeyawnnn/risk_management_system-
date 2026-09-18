@@ -49,6 +49,7 @@
 #include "risk/covariance.hpp"
 #include "risk/decomposition.hpp"
 #include "risk/portfolio.hpp"
+#include "risk/random.hpp"
 #include "risk/stress_test.hpp"
 #include "risk/var.hpp"
 
@@ -235,7 +236,6 @@ int main(int argc, char** argv) try {
     // One seed per sample size, so a rerun with more sizes does not perturb
     // the results for the sizes already reported.
     std::mt19937_64 gen(args.seed + static_cast<std::uint64_t>(n));
-    std::normal_distribution<double> nd(0.0, 1.0);
 
     for (const auto& e : estimators) {
       spectra[n][e].assign(static_cast<std::size_t>(N), Accumulator{});
@@ -245,7 +245,7 @@ int main(int argc, char** argv) try {
       Eigen::MatrixXd X(n, N);
       for (int t = 0; t < n; ++t) {
         Eigen::VectorXd z(N);
-        for (Eigen::Index i = 0; i < N; ++i) z(i) = nd(gen);
+        for (Eigen::Index i = 0; i < N; ++i) z(i) = standard_normal(gen);
         X.row(t) = (L * z).transpose();
       }
 

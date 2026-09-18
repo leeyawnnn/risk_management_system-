@@ -3,9 +3,11 @@
 
 #include <Eigen/Dense>
 #include <cmath>
+#include <cstdint>
 #include <random>
 #include <vector>
 
+#include "risk/random.hpp"
 #include "risk/var.hpp"
 
 using Catch::Matchers::WithinAbs;
@@ -151,4 +153,108 @@ TEST_CASE("VaR input validation", "[var][errors]") {
   CHECK_THROWS_AS(parametric_var(0.0, -1.0, 0.95), std::invalid_argument);
   CHECK_THROWS_AS(normal_ppf(0.0), std::invalid_argument);
   CHECK_THROWS_AS(normal_ppf(1.0), std::invalid_argument);
+}
+
+// ---------------------------------------------------------------------------
+// Reproducibility of the random path
+// ---------------------------------------------------------------------------
+
+TEST_CASE("uniform_unit covers [0, 1) without reaching 1",
+          "[var][random][reproducibility]") {
+  CHECK(risk::uniform_unit(0) == 0.0);
+  CHECK(risk::uniform_unit(~std::uint64_t{0}) < 1.0);
+  CHECK(risk::uniform_unit(~std::uint64_t{0}) > 1.0 - 1e-15);
+  // The open variant must exclude BOTH endpoints: normal_ppf rejects 0 and 1
+  // and Phi^{-1} is infinite at each. The all-ones case is the one that bit:
+  // the natural half-ulp offset rounds up to exactly 1.0 in double.
+  CHECK(risk::uniform_open_unit(0) > 0.0);
+  CHECK(risk::uniform_open_unit(~std::uint64_t{0}) < 1.0);
+  CHECK_NOTHROW(risk::normal_ppf(risk::uniform_open_unit(0)));
+  CHECK_NOTHROW(risk::normal_ppf(risk::uniform_open_unit(~std::uint64_t{0})));
+  // Sweep the extremes of the engine's output range for the same reason.
+  for (std::uint64_t b : {std::uint64_t{0}, std::uint64_t{1}, ~std::uint64_t{0},
+                          ~std::uint64_t{0} - 1, std::uint64_t{1} << 63}) {
+    const double u = risk::uniform_open_unit(b);
+    INFO("bits = " << b << " -> u = " << u);
+    CHECK(u > 0.0);
+    CHECK(u < 1.0);
+  }
+}
+
+TEST_CASE("uniform_below is in range and unbiased",
+          "[var][random][reproducibility]") {
+  std::mt19937_64 gen(1234);
+  std::vector<int> counts(7, 0);
+  const int draws = 70000;
+  for (int i = 0; i < draws; ++i) {
+    const std::uint64_t v = risk::uniform_below(gen, 7);
+    REQUIRE(v < 7);
+    ++counts[static_cast<std::size_t>(v)];
+  }
+  // Each bucket should land near draws/7 = 10000; 5 sigma of a binomial with
+  // p = 1/7 on 70000 draws is about 490.
+  for (int c : counts) {
+    CHECK(std::abs(c - 10000) < 600);
+  }
+  CHECK(risk::uniform_below(gen, 1) == 0);
+  CHECK(risk::uniform_below(gen, 0) == 0);
+}
+
+TEST_CASE("standard_normal has the right moments and a fixed sequence",
+          "[var][random][reproducibility]") {
+  std::mt19937_64 gen(20260918);
+  const int n = 200000;
+  double sum = 0.0;
+  double sumsq = 0.0;
+  double sum4 = 0.0;
+  for (int i = 0; i < n; ++i) {
+    const double z = risk::standard_normal(gen);
+    sum += z;
+    sumsq += z * z;
+    sum4 += z * z * z * z;
+  }
+  const double mean = sum / n;
+  const double var = sumsq / n - mean * mean;
+  CHECK_THAT(mean, WithinAbs(0.0, 0.01));
+  CHECK_THAT(var, WithinRel(1.0, 0.02));
+  // Excess kurtosis of a standard normal is 0.
+  CHECK_THAT(sum4 / n - 3.0, WithinAbs(0.0, 0.1));
+}
+
+TEST_CASE("the same seed reproduces the same draws exactly",
+          "[var][random][reproducibility]") {
+  // This is the property the committed report depends on. std::normal_
+  // distribution does NOT have it across standard libraries, which is why
+  // this project does not use it.
+  auto sequence = [](std::uint64_t seed, int n) {
+    std::mt19937_64 gen(seed);
+    std::vector<double> out;
+    out.reserve(static_cast<std::size_t>(n));
+    for (int i = 0; i < n; ++i) out.push_back(risk::standard_normal(gen));
+    return out;
+  };
+  CHECK(sequence(7, 64) == sequence(7, 64));
+  CHECK(sequence(7, 64) != sequence(8, 64));
+
+  // And the sequence is a pure function of the engine's bit stream, so it can
+  // be reproduced from first principles without calling into this project.
+  std::mt19937_64 gen(7);
+  const std::uint64_t bits = gen();
+  const double expected =
+      risk::normal_ppf(static_cast<double>(2 * (bits >> 12) + 1) * 0x1.0p-53);
+  std::mt19937_64 gen2(7);
+  CHECK(risk::standard_normal(gen2) == expected);
+}
+
+TEST_CASE("Monte Carlo VaR is stable across repeated runs",
+          "[var][random][reproducibility]") {
+  Eigen::MatrixXd cov(2, 2);
+  cov << 1e-4, 2e-5, 2e-5, 9e-5;
+  Eigen::VectorXd mean = Eigen::VectorXd::Zero(2);
+  Eigen::VectorXd w(2);
+  w << 0.6, 0.4;
+  const double a = risk::monte_carlo_var(mean, cov, w, 0.99, 1, 50000, 11);
+  const double b = risk::monte_carlo_var(mean, cov, w, 0.99, 1, 50000, 11);
+  CHECK(a == b);
+  CHECK(a != risk::monte_carlo_var(mean, cov, w, 0.99, 1, 50000, 12));
 }

@@ -42,6 +42,7 @@
 #include "risk/config.hpp"
 #include "risk/cvar.hpp"
 #include "risk/portfolio.hpp"
+#include "risk/random.hpp"
 #include "risk/var.hpp"
 
 namespace fs = std::filesystem;
@@ -116,7 +117,6 @@ BootstrapInterval bootstrap(const Eigen::VectorXd& returns, int resamples,
                             std::uint64_t seed, Stat stat) {
   const auto n = static_cast<std::size_t>(returns.size());
   std::mt19937_64 gen(seed);
-  std::uniform_int_distribution<std::size_t> pick(0, n - 1);
 
   std::vector<double> draws;
   draws.reserve(static_cast<std::size_t>(resamples));
@@ -124,7 +124,7 @@ BootstrapInterval bootstrap(const Eigen::VectorXd& returns, int resamples,
   for (int b = 0; b < resamples; ++b) {
     for (std::size_t i = 0; i < n; ++i) {
       sample(static_cast<Eigen::Index>(i)) =
-          returns(static_cast<Eigen::Index>(pick(gen)));
+          returns(static_cast<Eigen::Index>(uniform_below(gen, n)));
     }
     draws.push_back(stat(sample));
   }
@@ -180,6 +180,11 @@ int main(int argc, char** argv) try {
     // Below 4 degrees of freedom the kurtosis of a Student-t is undefined, so
     // the comparison table would print a meaningless number.
     throw std::invalid_argument("--df must be at least 4 for finite kurtosis");
+  }
+  if (std::abs(args.student_t_df - std::lround(args.student_t_df)) > 1e-9) {
+    // The portable t construction sums v squared normals, so v must be a
+    // whole number. Rejecting rather than rounding silently.
+    throw std::invalid_argument("--df must be a whole number");
   }
 
   const EngineConfig cfg = load_engine_config(args.portfolio);
@@ -285,18 +290,32 @@ int main(int argc, char** argv) try {
   const double t_scale = m.stdev / std::sqrt(df / (df - 2.0));
   const int reference_draws = 5'000'000;
 
+  // std::student_t_distribution is implementation defined like the rest, so
+  // the t variate is built here from the definition: Z / sqrt(V / v) with Z
+  // standard normal and V chi-square on v degrees of freedom, and V itself
+  // assembled from v standard normals. Slower than the library version, and
+  // identical on every platform.
   std::mt19937_64 gen(args.seed + 1);
-  std::student_t_distribution<double> td(df);
+  const int df_int = static_cast<int>(std::lround(df));
+  auto student_t = [&]() {
+    const double z = standard_normal(gen);
+    double chi_square = 0.0;
+    for (int k = 0; k < df_int; ++k) {
+      const double g = standard_normal(gen);
+      chi_square += g * g;
+    }
+    return z / std::sqrt(chi_square / static_cast<double>(df_int));
+  };
 
   Eigen::VectorXd reference(reference_draws);
   for (Eigen::Index i = 0; i < reference.size(); ++i) {
-    reference(i) = m.mean + td(gen) * t_scale;
+    reference(i) = m.mean + student_t() * t_scale;
   }
   // A short draw of the same process, to show what estimation noise alone
   // does at the sample size the real book actually has.
   Eigen::VectorXd short_draw(r.size());
   for (Eigen::Index i = 0; i < short_draw.size(); ++i) {
-    short_draw(i) = m.mean + td(gen) * t_scale;
+    short_draw(i) = m.mean + student_t() * t_scale;
   }
 
   const Moments rm = moments_of(reference);
