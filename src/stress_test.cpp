@@ -89,11 +89,11 @@ std::vector<StressScenario> load_scenarios(const std::string& path) {
     sc.type = js.value("type", std::string{});
     sc.description = js.value("description", std::string{});
     if (js.contains("asset_shocks")) {
-      for (auto& [k, v] : js["asset_shocks"].items())
+      for (const auto& [k, v] : js["asset_shocks"].items())
         sc.asset_shocks[k] = v.get<double>();
     }
     if (js.contains("factor_shocks")) {
-      for (auto& [k, v] : js["factor_shocks"].items())
+      for (const auto& [k, v] : js["factor_shocks"].items())
         sc.factor_shocks[k] = v.get<double>();
     }
     if (sc.name.empty()) {

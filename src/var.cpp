@@ -3,7 +3,9 @@
 #include "risk/random.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <numbers>
 #include <random>
 #include <stdexcept>
 
@@ -11,12 +13,12 @@ namespace risk {
 
 double normal_pdf(double x) {
   // phi(x) = exp(-x^2/2) / sqrt(2 pi).
-  return std::exp(-0.5 * x * x) / std::sqrt(2.0 * M_PI);
+  return std::exp(-0.5 * x * x) / std::sqrt(2.0 * std::numbers::pi);
 }
 
 double normal_cdf(double x) {
   // Phi(x) = 0.5 * erfc(-x / sqrt(2)).
-  return 0.5 * std::erfc(-x / std::sqrt(2.0));
+  return 0.5 * std::erfc(-x / std::numbers::sqrt2);
 }
 
 double normal_ppf(double p) {
@@ -25,17 +27,18 @@ double normal_ppf(double p) {
   }
   // Peter Acklam's rational approximation, then one Halley refinement step
   // using erfc for near machine-precision accuracy.
-  static const double a[] = {-3.969683028665376e+01, 2.209460984245205e+02,
-                             -2.759285104469687e+02, 1.383577518672690e+02,
-                             -3.066479806614716e+01, 2.506628277459239e+00};
-  static const double b[] = {-5.447609879822406e+01, 1.615858368580409e+02,
-                             -1.556989798598866e+02, 6.680131188771972e+01,
-                             -1.328068155288572e+01};
-  static const double c[] = {-7.784894002430293e-03, -3.223964580411365e-01,
-                             -2.400758277161838e+00, -2.549732539343734e+00,
-                             4.374664141464968e+00,  2.938163982698783e+00};
-  static const double d[] = {7.784695709041462e-03, 3.224671290700398e-01,
-                             2.445134137142996e+00, 3.754408661907416e+00};
+  static constexpr std::array<double, 6> a = {
+      -3.969683028665376e+01, 2.209460984245205e+02,  -2.759285104469687e+02,
+      1.383577518672690e+02,  -3.066479806614716e+01, 2.506628277459239e+00};
+  static constexpr std::array<double, 5> b = {
+      -5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02,
+      6.680131188771972e+01, -1.328068155288572e+01};
+  static constexpr std::array<double, 6> c = {
+      -7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00,
+      -2.549732539343734e+00, 4.374664141464968e+00,  2.938163982698783e+00};
+  static constexpr std::array<double, 4> d = {
+      7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00,
+      3.754408661907416e+00};
   const double plow = 0.02425;
   const double phigh = 1.0 - plow;
 
@@ -58,7 +61,8 @@ double normal_ppf(double p) {
 
   // Halley step: refine using e = Phi(x) - p, u = e * sqrt(2 pi) * exp(x^2/2).
   const double e = normal_cdf(x) - p;
-  const double u = e * std::sqrt(2.0 * M_PI) * std::exp(x * x / 2.0);
+  const double u =
+      e * std::sqrt(2.0 * std::numbers::pi) * std::exp(x * x / 2.0);
   x = x - u / (1.0 + x * u / 2.0);
   return x;
 }
@@ -69,8 +73,7 @@ double empirical_quantile(std::vector<double>& data, double q) {
   }
   q = std::clamp(q, 0.0, 1.0);
   const std::size_t n = data.size();
-  std::size_t k =
-      static_cast<std::size_t>(std::floor(q * static_cast<double>(n)));
+  auto k = static_cast<std::size_t>(std::floor(q * static_cast<double>(n)));
   if (k >= n) k = n - 1;
   // Partition so that data[k] holds the k-th smallest element. O(n) average.
   std::nth_element(data.begin(), data.begin() + static_cast<std::ptrdiff_t>(k),
@@ -109,7 +112,7 @@ double parametric_var(double mean, double stdev, double confidence,
     throw std::invalid_argument("parametric_var: horizon_days must be >= 1");
   }
   const double z = normal_ppf(confidence);
-  const double h = static_cast<double>(horizon_days);
+  const auto h = static_cast<double>(horizon_days);
   // mu scales linearly with time, sigma with sqrt(time).
   const double mu_h = mean * h;
   const double sigma_h = stdev * std::sqrt(h);
@@ -133,7 +136,7 @@ Eigen::VectorXd simulate_portfolio_returns(const Eigen::VectorXd& mean,
   }
 
   // Cholesky cov = L L^T. Fails loudly if cov is not positive (semi)definite.
-  Eigen::LLT<Eigen::MatrixXd> llt(cov);
+  Eigen::LLT<Eigen::MatrixXd> const llt(cov);
   if (llt.info() != Eigen::Success) {
     throw std::invalid_argument(
         "simulate_portfolio_returns: covariance is not positive definite "

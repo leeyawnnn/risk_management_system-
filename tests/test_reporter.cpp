@@ -22,7 +22,7 @@ namespace {
 // A return sample long enough for the backtests to have something to chew on.
 Eigen::MatrixXd sample_returns(int T = 600) {
   std::mt19937_64 gen(4242);
-    Eigen::MatrixXd L(3, 3);
+  Eigen::MatrixXd L(3, 3);
   L << 0.010, 0.0, 0.0, 0.004, 0.006, 0.0, -0.002, 0.001, 0.015;
   Eigen::MatrixXd X(T, 3);
   for (int t = 0; t < T; ++t) {

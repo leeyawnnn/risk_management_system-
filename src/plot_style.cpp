@@ -95,7 +95,7 @@ std::string sequential_color(double t) {
 std::string escape(const std::string& s) {
   std::string out;
   out.reserve(s.size());
-  for (char c : s) {
+  for (char const c : s) {
     switch (c) {
       case '&':
         out += "&amp;";
@@ -142,7 +142,7 @@ std::string thousands(double v) {
   std::string digits = os.str();
   std::string grouped;
   int count = 0;
-  for (char c : std::ranges::reverse_view(digits)) {
+  for (char const c : std::ranges::reverse_view(digits)) {
     if (count > 0 && count % 3 == 0) grouped.push_back(',');
     grouped.push_back(c);
     ++count;
@@ -322,7 +322,7 @@ void Figure::callout(double text_x, double text_y, double target_x,
 void Figure::y_axis(const Scale& y, const std::vector<double>& ticks,
                     const std::string& label,
                     std::string (*formatter)(double)) {
-  for (double t : ticks) {
+  for (double const t : ticks) {
     const double py = y(t);
     if (py < plot_top() - 0.5 || py > plot_bottom() + 0.5) continue;
     // Horizontal grid only, drawn under the data because axes are emitted
@@ -348,7 +348,7 @@ void Figure::y_axis(const Scale& y, const std::vector<double>& ticks,
 void Figure::x_axis(const Scale& x, const std::vector<double>& ticks,
                     const std::string& label,
                     std::string (*formatter)(double)) {
-  for (double t : ticks) {
+  for (double const t : ticks) {
     const double px = x(t);
     if (px < plot_left() - 0.5 || px > plot_right() + 0.5) continue;
     line(px, plot_bottom(), px, plot_bottom() + 4.0, kAxis, 1.0);
@@ -385,7 +385,7 @@ void Figure::x_category_axis(const std::vector<double>& centres,
 
 std::string Figure::str(const std::string& source) const {
   std::ostringstream os;
-  os << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << width_
+  os << R"(<svg xmlns="http://www.w3.org/2000/svg" width=")" << width_
      << "\" height=\"" << height_ << "\" viewBox=\"0 0 " << width_ << " "
      << height_ << "\" font-family=\"" << kFontStack << "\">\n";
   // An explicit background: without it the figure is transparent and becomes
@@ -393,19 +393,19 @@ std::string Figure::str(const std::string& source) const {
   os << "<rect width=\"" << width_ << "\" height=\"" << height_
      << "\" fill=\"#ffffff\"/>\n";
 
-  os << "<text x=\"36\" y=\"34\" font-size=\"" << fixed(kTitleSize, 1)
-     << "\" font-weight=\"600\" fill=\"" << kInk << "\">" << escape(title_)
+  os << R"(<text x="36" y="34" font-size=")" << fixed(kTitleSize, 1)
+     << R"(" font-weight="600" fill=")" << kInk << "\">" << escape(title_)
      << "</text>\n";
   if (!subtitle_.empty()) {
-    os << "<text x=\"36\" y=\"53\" font-size=\"" << fixed(kSubtitleSize, 1)
+    os << R"(<text x="36" y="53" font-size=")" << fixed(kSubtitleSize, 1)
        << "\" fill=\"" << kMutedInk << "\">" << escape(subtitle_)
        << "</text>\n";
   }
 
   os << body_;
 
-  os << "<text x=\"36\" y=\"" << (height_ - 14) << "\" font-size=\""
-     << fixed(kSourceSize, 1) << "\" font-style=\"italic\" fill=\"" << kFaintInk
+  os << R"(<text x="36" y=")" << (height_ - 14) << "\" font-size=\""
+     << fixed(kSourceSize, 1) << R"(" font-style="italic" fill=")" << kFaintInk
      << "\">" << escape(source) << "</text>\n";
   os << "</svg>\n";
   return os.str();

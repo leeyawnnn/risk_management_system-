@@ -15,7 +15,7 @@ bool parse_price(const std::string& field, double& out) {
   if (field.empty()) return false;
   try {
     std::size_t consumed = 0;
-    double v = std::stod(field, &consumed);
+    double const v = std::stod(field, &consumed);
     if (consumed != field.size()) return false;  // trailing junk
     if (!std::isfinite(v)) return false;
     out = v;
@@ -98,7 +98,8 @@ ReturnSeries ReturnSeries::from_csv(const std::string& path, ReturnType type,
     if (line.empty()) continue;
 
     std::stringstream ss(line);
-    std::string date_field, price_field;
+    std::string date_field;
+    std::string price_field;
     std::getline(ss, date_field, ',');
     std::getline(ss, price_field, ',');
     date_field = trim(date_field);

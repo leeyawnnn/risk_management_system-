@@ -138,7 +138,7 @@ BootstrapInterval bootstrap(const Eigen::VectorXd& returns, int resamples,
   const double mean = std::accumulate(draws.begin(), draws.end(), 0.0) /
                       static_cast<double>(draws.size());
   double ss = 0.0;
-  for (double d : draws) ss += (d - mean) * (d - mean);
+  for (double const d : draws) ss += (d - mean) * (d - mean);
   out.standard_error = std::sqrt(ss / static_cast<double>(draws.size() - 1));
   return out;
 }
@@ -181,7 +181,8 @@ int main(int argc, char** argv) try {
     // the comparison table would print a meaningless number.
     throw std::invalid_argument("--df must be at least 4 for finite kurtosis");
   }
-  if (std::abs(args.student_t_df - std::lround(args.student_t_df)) > 1e-9) {
+  if (std::abs(args.student_t_df -
+               static_cast<double>(std::lround(args.student_t_df))) > 1e-9) {
     // The portable t construction sums v squared normals, so v must be a
     // whole number. Rejecting rather than rounding silently.
     throw std::invalid_argument("--df must be a whole number");

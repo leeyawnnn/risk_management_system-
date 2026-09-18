@@ -356,7 +356,9 @@ AcerbiSzekelyResult acerbi_szekely(const Eigen::VectorXd& returns,
   const double null_es = stdev * normal_pdf(z_alpha) / p - mean;
 
   std::mt19937_64 gen(seed);
-  long le1 = 0, le2 = 0, defined1 = 0;
+  long le1 = 0;
+  long le2 = 0;
+  long defined1 = 0;
   Eigen::VectorXd sim(T);
   for (int s = 0; s < simulations; ++s) {
     for (Eigen::Index t = 0; t < T; ++t) {

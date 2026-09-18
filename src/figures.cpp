@@ -66,8 +66,8 @@ std::vector<std::size_t> correlation_cluster_order(
   auto average_distance = [&](const std::vector<std::size_t>& a,
                               const std::vector<std::size_t>& b) {
     double total = 0.0;
-    for (std::size_t i : a) {
-      for (std::size_t j : b) {
+    for (std::size_t const i : a) {
+      for (std::size_t const j : b) {
         total += 1.0 - correlation(static_cast<Eigen::Index>(i),
                                    static_cast<Eigen::Index>(j));
       }
@@ -209,7 +209,7 @@ std::string svg_weight_vs_risk(const std::vector<std::string>& names,
                 .range_lo = fig.plot_left(),
                 .range_hi = fig.plot_right()};
 
-  for (double t : plot::nice_ticks(lo, hi, 7)) {
+  for (double const t : plot::nice_ticks(lo, hi, 7)) {
     fig.line(x(t), fig.plot_top(), x(t), fig.plot_bottom(), plot::kGrid, 1.0);
     fig.text(x(t), fig.plot_bottom() + 17.0, pct1(t), plot::kTickSize,
              plot::kMutedInk, "middle");
@@ -293,7 +293,7 @@ std::string svg_risk_contribution_bars(const RiskAttribution& a,
                 .domain_hi = hi,
                 .range_lo = fig.plot_left(),
                 .range_hi = fig.plot_right()};
-  for (double t : plot::nice_ticks(lo, hi, 7)) {
+  for (double const t : plot::nice_ticks(lo, hi, 7)) {
     fig.line(x(t), fig.plot_top(), x(t), fig.plot_bottom(), plot::kGrid, 1.0);
     fig.text(x(t), fig.plot_bottom() + 17.0, pct1(t), plot::kTickSize,
              plot::kMutedInk, "middle");
@@ -351,9 +351,10 @@ std::string svg_risk_contribution_bars(const RiskAttribution& a,
 // Return distribution
 // ---------------------------------------------------------------------------
 
-std::string svg_return_histogram(const Eigen::VectorXd& r, double var,
-                                 double cvar, double confidence,
+std::string svg_return_histogram(const Eigen::VectorXd& portfolio_returns,
+                                 double var, double cvar, double confidence,
                                  const std::string& source, int bins) {
+  const Eigen::VectorXd& r = portfolio_returns;
   const auto n = static_cast<double>(r.size());
   const double mean = r.mean();
   const double sd = std::sqrt((r.array() - mean).square().sum() / (n - 1.0));
@@ -471,7 +472,7 @@ std::string svg_asset_volatility(const std::vector<std::string>& names,
   // multiple that a data refresh could quietly falsify.
   double vmin = std::numeric_limits<double>::infinity();
   double vmax = 0.0;
-  for (double v : annual_vol) {
+  for (double const v : annual_vol) {
     if (v > 0.0) vmin = std::min(vmin, v);
     vmax = std::max(vmax, v);
   }
@@ -502,7 +503,7 @@ std::string svg_asset_volatility(const std::vector<std::string>& names,
                 .domain_hi = hi,
                 .range_lo = fig.plot_left(),
                 .range_hi = fig.plot_right()};
-  for (double t : plot::nice_ticks(lo, hi, 7)) {
+  for (double const t : plot::nice_ticks(lo, hi, 7)) {
     fig.line(x(t), fig.plot_top(), x(t), fig.plot_bottom(), plot::kGrid, 1.0);
     fig.text(x(t), fig.plot_bottom() + 17.0, pct1(t), plot::kTickSize,
              plot::kMutedInk, "middle");
@@ -624,7 +625,7 @@ std::string svg_estimator_error(const std::vector<EstimatorErrorPoint>& points,
   fig.line(fig.plot_left(), fig.plot_bottom(), fig.plot_right(),
            fig.plot_bottom(), plot::kAxis, 1.0);
 
-  for (int s : sizes) {
+  for (int const s : sizes) {
     const double px = x(std::log10(static_cast<double>(s)));
     fig.line(px, fig.plot_bottom(), px, fig.plot_bottom() + 4.0, plot::kAxis,
              1.0);
@@ -653,7 +654,7 @@ std::string svg_estimator_error(const std::vector<EstimatorErrorPoint>& points,
     std::vector<std::pair<double, double>> centre;
     std::vector<std::pair<double, double>> upper;
     std::vector<std::pair<double, double>> lower;
-    for (int s : sizes) {
+    for (int const s : sizes) {
       for (const auto& p : points) {
         if (p.estimator != name || p.sample_size != s) continue;
         const double px = x(std::log10(static_cast<double>(s)));
@@ -689,7 +690,7 @@ std::string svg_estimator_error(const std::vector<EstimatorErrorPoint>& points,
     // already placed.
     double label_y = centre.back().second + 3.5;
     bool moved = false;
-    for (double used : label_ys) {
+    for (double const used : label_ys) {
       if (std::abs(label_y - used) < 12.0) {
         label_y = used + 12.0;
         moved = true;
@@ -757,7 +758,7 @@ std::string svg_eigenvalue_spectrum(const std::vector<SpectrumPoint>& points,
       estimators.push_back(p.estimator);
     }
     max_index = std::max(max_index, p.index);
-    for (double v : {p.estimated, p.truth}) {
+    for (double const v : {p.estimated, p.truth}) {
       if (v > 0.0) {
         lo = std::min(lo, v);
         hi = std::max(hi, v);
@@ -853,7 +854,7 @@ std::string svg_eigenvalue_spectrum(const std::vector<SpectrumPoint>& points,
     for (const auto& [px, py] : line) fig.circle(px, py, 3.0, color);
 
     double label_y = line.back().second + 3.5;
-    for (double used : label_ys) {
+    for (double const used : label_ys) {
       if (std::abs(label_y - used) < 12.0) label_y = used + 12.0;
     }
     label_ys.push_back(label_y);
@@ -868,11 +869,13 @@ std::string svg_eigenvalue_spectrum(const std::vector<SpectrumPoint>& points,
 // VaR backtest
 // ---------------------------------------------------------------------------
 
-std::string svg_var_backtest(const Eigen::VectorXd& r, double var_level,
-                             double confidence, const KupiecResult& kupiec,
+std::string svg_var_backtest(const Eigen::VectorXd& portfolio_returns,
+                             double var_level, double confidence,
+                             const KupiecResult& kupiec,
                              const ChristoffersenResult& christoffersen,
                              const BaselResult& basel,
                              const std::string& source) {
+  const Eigen::VectorXd& r = portfolio_returns;
   const int conf_pct = static_cast<int>(std::lround(confidence * 100.0));
 
   // The title reports the verdict the tests actually returned. Kupiec passing
@@ -1053,7 +1056,7 @@ std::string svg_factor_decomposition(const FactorDecomposition& d,
                 .domain_hi = hi,
                 .range_lo = fig.plot_left(),
                 .range_hi = fig.plot_right()};
-  for (double t : plot::nice_ticks(lo, hi, 7)) {
+  for (double const t : plot::nice_ticks(lo, hi, 7)) {
     fig.line(x(t), fig.plot_top(), x(t), fig.plot_bottom(), plot::kGrid, 1.0);
     fig.text(x(t), fig.plot_bottom() + 17.0, pct1(t), plot::kTickSize,
              plot::kMutedInk, "middle");

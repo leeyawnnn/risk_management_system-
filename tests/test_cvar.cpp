@@ -18,7 +18,7 @@ namespace {
 Eigen::VectorXd gaussian_sample(int n, double mu, double sigma,
                                 std::uint64_t seed) {
   std::mt19937_64 gen(seed);
-    Eigen::VectorXd v(n);
+  Eigen::VectorXd v(n);
   for (int i = 0; i < n; ++i) v(i) = risk_test::normal(gen, mu, sigma);
   return v;
 }
@@ -113,8 +113,9 @@ TEST_CASE("heavy tails widen the CVaR/VaR gap", "[cvar][heavytail]") {
   // Student-t(5): the tail-mean/quantile ratio is larger than Gaussian's,
   // so empirical CVaR/VaR exceeds the parametric (Gaussian) ratio of ~1.15.
   std::mt19937_64 gen(2025);
-    Eigen::VectorXd r(500'000);
-  for (Eigen::Index i = 0; i < r.size(); ++i) r(i) = 0.01 * risk_test::student_t(gen, 5);
+  Eigen::VectorXd r(500'000);
+  for (Eigen::Index i = 0; i < r.size(); ++i)
+    r(i) = 0.01 * risk_test::student_t(gen, 5);
 
   const double conf = 0.99;
   const double ratio = historical_cvar(r, conf) / historical_var(r, conf);

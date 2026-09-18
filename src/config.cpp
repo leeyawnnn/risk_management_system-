@@ -72,7 +72,7 @@ EngineConfig load_engine_config(const std::string& path) {
 }
 
 Portfolio make_portfolio(const EngineConfig& cfg) {
-  Eigen::VectorXd w = Eigen::Map<const Eigen::VectorXd>(
+  Eigen::VectorXd const w = Eigen::Map<const Eigen::VectorXd>(
       cfg.weights.data(), static_cast<Eigen::Index>(cfg.weights.size()));
   return {cfg.assets, w, cfg.notional};
 }

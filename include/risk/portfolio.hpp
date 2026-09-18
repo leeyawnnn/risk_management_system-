@@ -27,29 +27,35 @@ class Portfolio {
             double total_notional = 1.0);
 
   // ---- accessors -----------------------------------------------------------
-  const std::vector<std::string>& names() const { return names_; }
-  const Eigen::VectorXd& weights() const { return weights_; }
-  double notional() const { return notional_; }
-  Eigen::Index size() const { return weights_.size(); }
+  [[nodiscard]] const std::vector<std::string>& names() const { return names_; }
+  [[nodiscard]] const Eigen::VectorXd& weights() const { return weights_; }
+  [[nodiscard]] double notional() const { return notional_; }
+  [[nodiscard]] Eigen::Index size() const { return weights_.size(); }
 
   // ---- portfolio aggregation ----------------------------------------------
   // Weighted return series from a (T x N) asset return matrix: returns X * w,
   // a length-T vector of portfolio returns. Throws on column-count mismatch.
-  Eigen::VectorXd return_series(const Eigen::MatrixXd& asset_returns) const;
+  [[nodiscard]] Eigen::VectorXd return_series(
+      const Eigen::MatrixXd& asset_returns) const;
 
   // ---- risk -----------------------------------------------------------------
-  double variance(const Eigen::MatrixXd& cov) const;    // w^T Sigma w
-  double volatility(const Eigen::MatrixXd& cov) const;  // sqrt(variance)
+  [[nodiscard]] double variance(
+      const Eigen::MatrixXd& cov) const;  // w^T Sigma w
+  [[nodiscard]] double volatility(
+      const Eigen::MatrixXd& cov) const;  // sqrt(variance)
 
   // Marginal contribution to risk per asset: (Sigma w) / sigma_p.
-  Eigen::VectorXd marginal_contributions(const Eigen::MatrixXd& cov) const;
+  [[nodiscard]] Eigen::VectorXd marginal_contributions(
+      const Eigen::MatrixXd& cov) const;
 
   // Component contribution to risk per asset: w_i * MCR_i. Sums to
   // volatility().
-  Eigen::VectorXd component_contributions(const Eigen::MatrixXd& cov) const;
+  [[nodiscard]] Eigen::VectorXd component_contributions(
+      const Eigen::MatrixXd& cov) const;
 
   // Percentage contribution per asset: CCR_i / sigma_p. Sums to 1.
-  Eigen::VectorXd percent_contributions(const Eigen::MatrixXd& cov) const;
+  [[nodiscard]] Eigen::VectorXd percent_contributions(
+      const Eigen::MatrixXd& cov) const;
 
  private:
   void validate_cov(const Eigen::MatrixXd& cov) const;

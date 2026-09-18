@@ -15,7 +15,7 @@ double tail_mean(std::vector<double>& data, double tail_prob) {
   tail_prob = std::clamp(tail_prob, 0.0, 1.0);
   const std::size_t n = data.size();
   // k = number of observations in the tail; always at least 1 (the worst).
-  std::size_t k =
+  auto k =
       static_cast<std::size_t>(std::floor(tail_prob * static_cast<double>(n)));
   if (k < 1) k = 1;
   if (k > n) k = n;
@@ -62,7 +62,7 @@ double parametric_cvar(double mean, double stdev, double confidence,
   const double alpha_tail = 1.0 - confidence;
   const double z = normal_ppf(confidence);              // 1.645 at 95%
   const double es_factor = normal_pdf(z) / alpha_tail;  // phi(z)/(1-conf)
-  const double h = static_cast<double>(horizon_days);
+  const auto h = static_cast<double>(horizon_days);
   return -mean * h + stdev * std::sqrt(h) * es_factor;
 }
 

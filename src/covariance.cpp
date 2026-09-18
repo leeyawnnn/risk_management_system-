@@ -16,7 +16,7 @@ bool is_symmetric(const Eigen::MatrixXd& M, double tol) {
 bool is_psd(const Eigen::MatrixXd& M, double tol) {
   if (!is_symmetric(M, std::max(tol, 1e-10))) return false;
   // Symmetric eigen-solver: eigenvalues are real and sorted ascending.
-  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> es(M);
+  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> const es(M);
   if (es.info() != Eigen::Success) return false;
   return es.eigenvalues().minCoeff() >= -tol;
 }
@@ -30,11 +30,11 @@ MatrixDiagnostics diagnose_matrix(const Eigen::MatrixXd& M,
   }
   d.symmetric = is_symmetric(M);
 
-  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> es(M);
+  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> const es(M);
   if (es.info() != Eigen::Success) {
     throw std::runtime_error("diagnose_matrix: eigen decomposition failed");
   }
-  const Eigen::VectorXd ev = es.eigenvalues();  // ascending
+  const Eigen::VectorXd& ev = es.eigenvalues();  // ascending
   d.min_eigenvalue = ev.minCoeff();
   d.max_eigenvalue = ev.maxCoeff();
   d.psd = d.symmetric && d.min_eigenvalue >= -1e-10;
@@ -54,7 +54,7 @@ Eigen::MatrixXd to_return_matrix(const std::vector<ReturnSeries>& series) {
     throw std::invalid_argument("to_return_matrix: no series provided");
   }
   const Eigen::Index T = series.front().size();
-  const Eigen::Index N = static_cast<Eigen::Index>(series.size());
+  const auto N = static_cast<Eigen::Index>(series.size());
   if (T < 1) {
     throw std::invalid_argument("to_return_matrix: empty series");
   }
@@ -94,7 +94,7 @@ Eigen::VectorXd ewma_weights(Eigen::Index T, double lambda) {
   // age = T-1-t : the most recent row (t = T-1) has age 0 and the largest
   // weight lambda^0 = 1; the oldest row has the smallest.
   for (Eigen::Index t = 0; t < T; ++t) {
-    const double age = static_cast<double>(T - 1 - t);
+    const auto age = static_cast<double>(T - 1 - t);
     w(t) = std::pow(lambda, age);
   }
   w /= w.sum();  // normalize to a probability vector
@@ -110,7 +110,7 @@ Eigen::MatrixXd ewma_covariance(const Eigen::MatrixXd& X, double lambda) {
   const Eigen::VectorXd w = ewma_weights(T, lambda);
 
   // Weighted mean (row vector over assets).
-  Eigen::RowVectorXd wmean = w.transpose() * X;  // (1xT)(TxN) = 1xN
+  Eigen::RowVectorXd const wmean = w.transpose() * X;  // (1xT)(TxN) = 1xN
   const Eigen::MatrixXd Xc = X.rowwise() - wmean;
 
   // Weighted covariance: Xc^T diag(w) Xc. PSD since w >= 0.
@@ -131,7 +131,7 @@ LedoitWolf ledoit_wolf_covariance(const Eigen::MatrixXd& X) {
     throw std::invalid_argument(
         "ledoit_wolf_covariance: need at least 2 assets");
   }
-  const double Td = static_cast<double>(T);
+  const auto Td = static_cast<double>(T);
 
   // Demeaned data and the MLE (1/T) sample covariance used in the derivation.
   const Eigen::RowVectorXd mean = X.colwise().mean();
@@ -165,7 +165,7 @@ LedoitWolf ledoit_wolf_covariance(const Eigen::MatrixXd& X) {
   for (Eigen::Index t = 0; t < T; ++t) {
     const Eigen::RowVectorXd xt = Xc.row(t);
     // outer product of this observation, minus S, squared elementwise.
-    Eigen::MatrixXd d = (xt.transpose() * xt) - S;
+    Eigen::MatrixXd const d = (xt.transpose() * xt) - S;
     pi_mat += d.cwiseProduct(d);
   }
   pi_mat /= Td;
@@ -179,7 +179,8 @@ LedoitWolf ledoit_wolf_covariance(const Eigen::MatrixXd& X) {
       if (sd(i) == 0.0 || sd(j) == 0.0) continue;
       // theta_ii,ij = (1/T) sum_t (x_ti^2 - s_ii)(x_ti x_tj - s_ij)
       // theta_jj,ij = (1/T) sum_t (x_tj^2 - s_jj)(x_ti x_tj - s_ij)
-      double theta_ii = 0.0, theta_jj = 0.0;
+      double theta_ii = 0.0;
+      double theta_jj = 0.0;
       for (Eigen::Index t = 0; t < T; ++t) {
         const double xi = Xc(t, i);
         const double xj = Xc(t, j);

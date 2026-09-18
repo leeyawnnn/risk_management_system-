@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Eigen/Dense>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -14,7 +15,7 @@ namespace risk {
 // Log returns are time-additive (sum over a window = log of the cumulative
 // gross return), which is why risk models usually prefer them. Simple returns
 // are asset-additive across a portfolio at a single point in time.
-enum class ReturnType { Simple, Log };
+enum class ReturnType : std::uint8_t { Simple, Log };
 
 // Policy for a row whose price field is absent / non-numeric (a "missing"
 // observation). Genuine non-trading days (weekends, holidays) are simply not
@@ -25,7 +26,7 @@ enum class ReturnType { Simple, Log };
 //   FillForward: carry the last valid price forward (return for that day = 0).
 //
 // There is deliberately no silent default: the caller must choose.
-enum class MissingPolicy { Skip, FillForward };
+enum class MissingPolicy : std::uint8_t { Skip, FillForward };
 
 // A single asset's daily return series: an Eigen vector of returns plus the
 // date label attached to each return (the date of P_t, the *end* of the step).
@@ -51,28 +52,30 @@ class ReturnSeries {
                                double annualization_factor = 252.0);
 
   // ---- accessors -----------------------------------------------------------
-  const Eigen::VectorXd& returns() const { return returns_; }
-  const std::vector<std::string>& dates() const { return dates_; }
-  Eigen::Index size() const { return returns_.size(); }
-  ReturnType type() const { return type_; }
-  double annualization_factor() const { return annualization_factor_; }
+  [[nodiscard]] const Eigen::VectorXd& returns() const { return returns_; }
+  [[nodiscard]] const std::vector<std::string>& dates() const { return dates_; }
+  [[nodiscard]] Eigen::Index size() const { return returns_.size(); }
+  [[nodiscard]] ReturnType type() const { return type_; }
+  [[nodiscard]] double annualization_factor() const {
+    return annualization_factor_;
+  }
 
   // ---- summary statistics --------------------------------------------------
-  double mean() const;      // arithmetic mean of the returns
-  double variance() const;  // sample variance (unbiased, /(n-1))
-  double stdev() const;     // sqrt(variance)
+  [[nodiscard]] double mean() const;      // arithmetic mean of the returns
+  [[nodiscard]] double variance() const;  // sample variance (unbiased, /(n-1))
+  [[nodiscard]] double stdev() const;     // sqrt(variance)
 
-  double annualized_mean() const;  // mean * factor
-  double annualized_vol() const;   // stdev * sqrt(factor)
+  [[nodiscard]] double annualized_mean() const;  // mean * factor
+  [[nodiscard]] double annualized_vol() const;   // stdev * sqrt(factor)
 
   // Sum of the (log) returns over the whole window. For a Log series this
   // equals ln(P_last / P_first) by additivity. Provided for both types but
   // only carries that interpretation for Log.
-  double sum() const;
+  [[nodiscard]] double sum() const;
 
   // Cumulative *simple* return over the window: P_last / P_first - 1.
   // Computed from whichever return convention this series stores.
-  double cumulative_return() const;
+  [[nodiscard]] double cumulative_return() const;
 
  private:
   std::vector<std::string> dates_;

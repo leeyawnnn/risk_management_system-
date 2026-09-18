@@ -37,7 +37,7 @@ std::string money(double v) {
   const std::string digits = os.str();
   std::string grouped;
   int count = 0;
-  for (char c : std::ranges::reverse_view(digits)) {
+  for (char const c : std::ranges::reverse_view(digits)) {
     if (count > 0 && count % 3 == 0) grouped.push_back(',');
     grouped.push_back(c);
     ++count;
@@ -162,8 +162,8 @@ RiskReport build_report(const std::string& name, const Portfolio& portfolio,
   const Eigen::VectorXd asset_mean = X.colwise().mean().transpose();
   const Eigen::VectorXd& w = portfolio.weights();
 
-  for (double conf : in.confidences) {
-    for (int h : in.horizons) {
+  for (double const conf : in.confidences) {
+    for (int const h : in.horizons) {
       rep.var_cvar.push_back({"Historical", conf, h,
                               historical_var(rep.portfolio_returns, conf, h),
                               historical_cvar(rep.portfolio_returns, conf, h)});
@@ -179,7 +179,7 @@ RiskReport build_report(const std::string& name, const Portfolio& portfolio,
   }
 
   rep.attribution = compute_attribution(portfolio, cov, in.sectors);
-  for (double conf : in.confidences) {
+  for (double const conf : in.confidences) {
     rep.var_decomposition.push_back(
         decompose_var(portfolio, cov, asset_mean, conf, 1, in.sectors));
   }
@@ -248,7 +248,7 @@ RiskReport build_report(const std::string& name, const Portfolio& portfolio,
   // ---- backtests -----------------------------------------------------------
   // Every method at every confidence level, so the table says which of them
   // are calibrated rather than reporting one number and a picture.
-  for (double conf : in.confidences) {
+  for (double const conf : in.confidences) {
     struct MethodVar {
       const char* label;
       double var;
@@ -308,7 +308,7 @@ RiskReport build_report(const std::string& name, const Portfolio& portfolio,
         portfolio, *in.betas, in.factors->names, factor_cov, specific, cov);
     rep.has_factor_decomposition = true;
 
-    for (double target : in.reverse_stress_targets) {
+    for (double const target : in.reverse_stress_targets) {
       rep.reverse_stress.push_back(reverse_stress(
           portfolio, *in.betas, in.factors->names, factor_cov, target));
     }

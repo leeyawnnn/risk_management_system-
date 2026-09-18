@@ -27,7 +27,7 @@ VarDecomposition decompose_var(
 
   const Eigen::VectorXd& w = portfolio.weights();
   const double z = normal_ppf(confidence);
-  const double h = static_cast<double>(horizon_days);
+  const auto h = static_cast<double>(horizon_days);
   const double sqrt_h = std::sqrt(h);
 
   const double sigma = portfolio.volatility(cov);  // 1-day
@@ -87,7 +87,7 @@ IncrementalVar incremental_var(const Portfolio& portfolio,
 
   const Eigen::VectorXd& w = portfolio.weights();
   const double z = normal_ppf(confidence);
-  const double h = static_cast<double>(horizon_days);
+  const auto h = static_cast<double>(horizon_days);
   const double sqrt_h = std::sqrt(h);
 
   auto var_dollars = [&](const Eigen::VectorXd& weights, double size) {
