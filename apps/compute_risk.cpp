@@ -1,21 +1,29 @@
+// Compute the full risk report for a portfolio and write it to disk.
+//
+// Every output is stamped with the data's as-of date, the git commit of the
+// code that produced it and the RNG seed, so a number in the README can
+// always be traced back to a specific run.
+
 #include <nlohmann/json.hpp>
 
 #include <Eigen/Dense>
+#include <array>
+#include <cstdint>
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <map>
 #include <string>
 #include <vector>
 
+#include "risk/backtest.hpp"
+#include "risk/config.hpp"
 #include "risk/covariance.hpp"
-#include "risk/cvar.hpp"
-#include "risk/figures.hpp"
+#include "risk/decomposition.hpp"
 #include "risk/portfolio.hpp"
 #include "risk/reporter.hpp"
-#include "risk/return_series.hpp"
 #include "risk/stress_test.hpp"
-#include "risk/var.hpp"
+#include "risk/version.hpp"
 
 namespace fs = std::filesystem;
 using namespace risk;
@@ -25,168 +33,236 @@ namespace {
 struct Args {
   std::string portfolio = "config/portfolio.json";
   std::string data = "data/returns/";
+  std::string factors = "data/factors.csv";
   std::string output = "output/";
+  std::string estimator_csv;
+  std::string as_of;
+  std::string git_commit;
+  std::uint64_t seed = 0;
+  bool seed_set = false;
 };
 
 void usage() {
   std::cout
-      << "Usage: compute_risk [--portfolio FILE] [--data DIR] [--output DIR]\n"
-      << "  --portfolio  portfolio JSON (default config/portfolio.json)\n"
-      << "  --data       directory of <ASSET>.csv return files (default "
-         "data/returns/)\n"
-      << "  --output     output directory for reports + figures (default "
-         "output/)\n";
+      << "compute_risk " << kVersionString << "\n\n"
+      << "Usage: compute_risk [options]\n"
+      << "  --portfolio FILE   portfolio config (default "
+         "config/portfolio.json)\n"
+      << "  --data DIR         return CSV directory (default data/returns/)\n"
+      << "  --factors FILE     factor series (default data/factors.csv)\n"
+      << "  --output DIR       output directory (default output/)\n"
+      << "  --estimator-csv F  estimator study output, for that one figure\n"
+      << "  --seed N           RNG seed; overrides the config\n"
+      << "  --as-of DATE       data as-of date stamped into every artifact.\n"
+      << "                     Defaults to the as_of in data/manifest.json.\n"
+      << "  --commit SHA       code commit stamped into every artifact.\n"
+      << "                     Defaults to `git rev-parse HEAD`.\n"
+      << "  --help             this message\n";
 }
 
-bool parse_args(int argc, char** argv, Args& a) {
-  for (int i = 1; i < argc; ++i) {
-    std::string s = argv[i];
-    auto next = [&](const char* name) -> std::string {
-      if (i + 1 >= argc)
-        throw std::invalid_argument(std::string("missing value for ") + name);
-      return argv[++i];
-    };
-    if (s == "--portfolio")
-      a.portfolio = next("--portfolio");
-    else if (s == "--data")
-      a.data = next("--data");
-    else if (s == "--output")
-      a.output = next("--output");
-    else if (s == "--help" || s == "-h") {
-      usage();
-      return false;
-    } else
-      throw std::invalid_argument("unknown argument: " + s);
+// Read a value out of data/manifest.json, so the as-of date comes from the
+// data rather than from the clock. A report that stamps itself with the
+// wall-clock time claims to be more current than its slowest input.
+std::string manifest_as_of(const std::string& data_dir) {
+  // `data_dir` usually arrives with a trailing separator, and parent_path()
+  // on "data/returns/" returns "data/returns", not "data". Going up through
+  // ".." and normalising handles both spellings.
+  const fs::path path =
+      (fs::path(data_dir) / ".." / "manifest.json").lexically_normal();
+  std::ifstream in(path);
+  if (!in) return {};
+  try {
+    nlohmann::json j;
+    in >> j;
+    return j.value("as_of", std::string{});
+  } catch (const std::exception&) {
+    return {};
   }
-  return true;
 }
 
-ReturnType parse_return_type(const std::string& s) {
-  if (s == "log") return ReturnType::Log;
-  if (s == "simple") return ReturnType::Simple;
-  throw std::invalid_argument("return_type must be \"log\" or \"simple\"");
-}
-
-MissingPolicy parse_missing(const std::string& s) {
-  if (s == "skip") return MissingPolicy::Skip;
-  if (s == "fill_forward" || s == "ffill") return MissingPolicy::FillForward;
-  throw std::invalid_argument(
-      "missing_policy must be \"skip\" or \"fill_forward\"");
+// Short git SHA of the working tree, or empty when git is unavailable or this
+// is not a checkout. Never fabricated.
+std::string git_head() {
+  std::array<char, 128> buffer{};
+  // NOLINTNEXTLINE(cert-env33-c): fixed command, no user input reaches it.
+  FILE* pipe = popen("git rev-parse --short=10 HEAD 2>/dev/null", "r");
+  if (pipe == nullptr) return {};
+  std::string out;
+  while (std::fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) !=
+         nullptr) {
+    out += buffer.data();
+  }
+  pclose(pipe);
+  while (!out.empty() && (out.back() == '\n' || out.back() == '\r')) {
+    out.pop_back();
+  }
+  return out;
 }
 
 }  // namespace
 
 int main(int argc, char** argv) try {
   Args args;
-  if (!parse_args(argc, argv, args)) return 0;
+  for (int i = 1; i < argc; ++i) {
+    const std::string s = argv[i];
+    auto next = [&](const char* flag) -> std::string {
+      if (i + 1 >= argc) {
+        throw std::invalid_argument(std::string("missing value for ") + flag);
+      }
+      return argv[++i];
+    };
+    if (s == "--portfolio") {
+      args.portfolio = next("--portfolio");
+    } else if (s == "--data") {
+      args.data = next("--data");
+    } else if (s == "--factors") {
+      args.factors = next("--factors");
+    } else if (s == "--output") {
+      args.output = next("--output");
+    } else if (s == "--estimator-csv") {
+      args.estimator_csv = next("--estimator-csv");
+    } else if (s == "--seed") {
+      args.seed = std::stoull(next("--seed"));
+      args.seed_set = true;
+    } else if (s == "--as-of") {
+      args.as_of = next("--as-of");
+    } else if (s == "--commit") {
+      args.git_commit = next("--commit");
+    } else if (s == "--help" || s == "-h") {
+      usage();
+      return 0;
+    } else {
+      throw std::invalid_argument("unknown argument: " + s);
+    }
+  }
 
-  // ---- load portfolio config ------------------------------------------------
-  std::ifstream cfg_in(args.portfolio);
-  if (!cfg_in) {
-    std::cerr << "error: cannot open portfolio file " << args.portfolio << "\n";
+  const EngineConfig cfg = load_engine_config(args.portfolio);
+  const Portfolio portfolio = make_portfolio(cfg);
+
+  const Eigen::MatrixXd X = load_return_matrix(cfg, args.data);
+  std::cout << "loaded " << cfg.assets.size() << " instruments x " << X.rows()
+            << " returns from " << args.data << "\n";
+
+  const Eigen::MatrixXd cov =
+      estimate_covariance(cfg.covariance_method, X, cfg.ewma_lambda);
+  const auto diag = diagnose_matrix(cov);
+  if (!diag.psd) {
+    std::cerr << "error: estimated covariance is not positive semi-definite "
+                 "(min eigenvalue "
+              << diag.min_eigenvalue << ")\n";
     return 1;
   }
-  nlohmann::json cfg;
-  cfg_in >> cfg;
-
-  const std::string name = cfg.value("name", "Portfolio");
-  const double notional = cfg.value("notional", 1.0);
-  const ReturnType rtype = parse_return_type(cfg.value("return_type", "log"));
-  const MissingPolicy missing =
-      parse_missing(cfg.value("missing_policy", "skip"));
-  const double annual = cfg.value("annualization_factor", 252.0);
-  const std::string cov_method = cfg.value("covariance", "sample");
-  const double lambda = cfg.value("ewma_lambda", 0.94);
-  const std::vector<double> confidences =
-      cfg.value("confidences", std::vector<double>{0.95, 0.99});
-  const std::vector<int> horizons =
-      cfg.value("horizons", std::vector<int>{1, 10});
-  int mc_draws = 100000;
-  std::uint64_t mc_seed = 42;
-  if (cfg.contains("monte_carlo")) {
-    mc_draws = cfg["monte_carlo"].value("draws", 100000);
-    mc_seed = cfg["monte_carlo"].value("seed", 42);
-  }
-
-  std::vector<std::string> assets;
-  std::vector<double> weights_v;
-  std::map<std::string, std::string> sectors;
-  for (const auto& pos : cfg.at("positions")) {
-    const std::string a = pos.at("asset");
-    assets.push_back(a);
-    weights_v.push_back(pos.at("weight").get<double>());
-    if (pos.contains("sector")) sectors[a] = pos["sector"];
-  }
-  Eigen::VectorXd weights = Eigen::Map<Eigen::VectorXd>(
-      weights_v.data(), static_cast<Eigen::Index>(weights_v.size()));
-  Portfolio portfolio(assets, weights, notional);
-
-  // ---- load return series for each asset -----------------------------------
-  std::vector<ReturnSeries> series;
-  for (const auto& a : assets) {
-    const std::string path = (fs::path(args.data) / (a + ".csv")).string();
-    series.push_back(ReturnSeries::from_csv(path, rtype, missing, annual));
-    std::cout << "loaded " << path << " (" << series.back().size()
-              << " returns)\n";
-  }
-  Eigen::MatrixXd X = to_return_matrix(series);  // T x N
-
-  // ---- covariance ----------------------------------------------------------
-  Eigen::MatrixXd cov;
-  if (cov_method == "sample")
-    cov = sample_covariance(X);
-  else if (cov_method == "ewma")
-    cov = ewma_covariance(X, lambda);
-  else if (cov_method == "ledoit_wolf")
-    cov = ledoit_wolf_covariance(X).cov;
-  else
-    throw std::invalid_argument("unknown covariance method: " + cov_method);
-
-  if (!is_psd(cov)) {
-    std::cerr << "error: estimated covariance is not positive semi-definite\n";
-    return 1;
+  if (diag.ill_conditioned) {
+    // Not fatal, but it must be said out loud rather than discovered later in
+    // whatever the first ldlt() does with it.
+    std::cerr << "warning: covariance condition number is "
+              << diag.condition_number
+              << "; results that involve inverting Sigma should be treated "
+                 "with caution\n";
   }
 
   // ---- stress scenarios ----------------------------------------------------
   std::vector<StressResult> stress;
-  if (cfg.contains("stress_scenarios")) {
-    auto scenarios = load_scenarios(cfg["stress_scenarios"].get<std::string>());
-    FactorBetas betas;
-    if (cfg.contains("factor_betas"))
-      betas = load_factor_betas(cfg["factor_betas"].get<std::string>());
+  FactorBetas betas;
+  bool have_betas = false;
+  if (!cfg.factor_betas_path.empty()) {
+    betas = load_factor_betas(cfg.factor_betas_path);
+    have_betas = !betas.empty();
+  }
+  if (!cfg.stress_scenarios_path.empty()) {
+    const auto scenarios = load_scenarios(cfg.stress_scenarios_path);
     stress = apply_scenarios(portfolio, scenarios, betas);
   }
 
-  // ---- build + write report ------------------------------------------------
-  RiskReport rep =
-      build_report(name, portfolio, X, cov, cov_method, annual, confidences,
-                   horizons, stress, sectors, mc_draws, mc_seed);
+  // ---- factor series -------------------------------------------------------
+  FactorSeries factors;
+  bool have_factors = false;
+  if (fs::exists(args.factors)) {
+    factors = load_factor_series(args.factors);
+    have_factors = factors.values.rows() == X.rows();
+    if (!have_factors) {
+      std::cerr << "warning: factor series has " << factors.values.rows()
+                << " rows against " << X.rows()
+                << " returns; skipping the factor sections rather than "
+                   "aligning them silently\n";
+    }
+  }
+
+  // ---- report --------------------------------------------------------------
+  ReportInputs in;
+  in.asset_returns = &X;
+  in.cov = &cov;
+  in.cov_method = cfg.covariance_method;
+  in.annualization_factor = cfg.annualization_factor;
+  in.confidences = cfg.confidences;
+  in.horizons = cfg.horizons;
+  in.stress = stress;
+  in.sectors = cfg.sectors;
+  in.mc_draws = cfg.mc_draws;
+  in.seed = args.seed_set ? args.seed : cfg.seed;
+  in.ewma_lambda = cfg.ewma_lambda;
+  in.as_of = args.as_of.empty() ? manifest_as_of(args.data) : args.as_of;
+  in.git_commit = args.git_commit.empty() ? git_head() : args.git_commit;
+  if (have_factors && have_betas) {
+    in.factors = &factors;
+    in.betas = &betas;
+    in.reverse_stress_targets = {0.05, 0.10, 0.20};
+  }
+  // A representative trade on the largest and smallest positions, priced by
+  // full revaluation. These are illustrative sizes, stated as such.
+  if (!cfg.assets.empty()) {
+    in.trades.emplace_back(cfg.assets.front(), 1'000'000.0);
+    in.trades.emplace_back(cfg.assets.back(), 1'000'000.0);
+    in.trades.emplace_back(cfg.assets.front(), -1'000'000.0);
+  }
+
+  const RiskReport rep = build_report(cfg.name, portfolio, in);
 
   fs::create_directories(args.output);
   fs::create_directories(fs::path(args.output) / "figures");
   write_reports(rep, args.output);
-  write_all_figures(rep, (fs::path(args.output) / "figures").string());
+  write_all_figures(rep, (fs::path(args.output) / "figures").string(),
+                    args.estimator_csv);
 
   // ---- console summary -----------------------------------------------------
-  std::cout << "\n=== " << name << " ===\n";
-  std::cout << "Covariance: " << cov_method << " | notional: " << notional
-            << "\n";
-  std::cout << "Portfolio vol: " << rep.daily_vol * 100 << "% daily / "
-            << rep.annual_vol * 100 << "% annual\n";
+  std::cout << "\n=== " << cfg.name << " ===\n"
+            << "as-of " << (rep.as_of.empty() ? "unstamped" : rep.as_of)
+            << " | commit "
+            << (rep.git_commit.empty() ? "unstamped" : rep.git_commit)
+            << " | seed " << rep.seed << "\n"
+            << "covariance " << cfg.covariance_method << " | notional "
+            << cfg.notional << "\n"
+            << "portfolio vol " << rep.daily_vol * 100 << "% daily / "
+            << rep.annual_vol * 100 << "% annual\n"
+            << "excess kurtosis " << rep.portfolio_excess_kurtosis
+            << " | cond(corr) " << rep.correlation_diagnostics.condition_number
+            << "\n\n";
+
+  std::cout << "VaR/CVaR, 1 day:\n";
   for (const auto& r : rep.var_cvar) {
     if (r.horizon_days != 1) continue;
     std::cout << "  " << r.method << " " << static_cast<int>(r.confidence * 100)
-              << "% 1d VaR=" << r.var * 100 << "%  CVaR=" << r.cvar * 100
+              << "%  VaR " << r.var * 100 << "%  CVaR " << r.cvar * 100
               << "%\n";
   }
-  std::cout << "Effective # bets: "
-            << rep.attribution.concentration.effective_num_bets
-            << " | top: " << rep.attribution.concentration.max_contributor
-            << " (" << rep.attribution.concentration.max_contribution * 100
-            << "%)\n";
-  std::cout << "Reports written to " << args.output
-            << "report.json, report.md, "
-            << "figures/*.svg\n";
+
+  std::cout << "\nbacktests:\n";
+  for (const auto& b : rep.backtests) {
+    std::cout << "  " << b.method << " " << static_cast<int>(b.confidence * 100)
+              << "%  " << b.kupiec.exceptions << " exceptions"
+              << "  Kupiec p=" << b.kupiec.p_value
+              << (b.kupiec.reject_at_95 ? " REJECT" : " pass")
+              << "  independence p=" << b.christoffersen.p_value_independence
+              << (b.christoffersen.reject_independence_at_95 ? " REJECT"
+                                                             : " pass")
+              << "  Basel " << to_string(b.basel.zone) << "\n";
+  }
+
+  std::cout << "\neffective bets "
+            << rep.attribution.concentration.effective_num_bets << " | top "
+            << rep.attribution.concentration.max_contributor << " "
+            << rep.attribution.concentration.max_contribution * 100 << "%\n";
+  std::cout << "reports written to " << args.output << "\n";
   return 0;
 } catch (const std::exception& e) {
   std::cerr << "error: " << e.what() << "\n";

@@ -64,6 +64,7 @@ add_library(risk_core
     src/cvar.cpp
     src/decomposition.cpp
     src/figures.cpp
+    src/plot_style.cpp
     src/portfolio.cpp
     src/reporter.cpp
     src/return_series.cpp
@@ -102,7 +103,9 @@ if(RISK_BUILD_TESTS)
       tests/test_covariance_reference.cpp
       tests/test_cvar.cpp
       tests/test_decomposition.cpp
+      tests/test_figures.cpp
       tests/test_portfolio.cpp
+      tests/test_reporter.cpp
       tests/test_return_series.cpp
       tests/test_stress_test.cpp
       tests/test_var.cpp)

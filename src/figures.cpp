@@ -2,497 +2,948 @@
 
 #include <algorithm>
 #include <cmath>
-#include <fstream>
+#include <limits>
+#include <map>
+#include <numeric>
+#include <set>
 #include <sstream>
-#include <stdexcept>
+#include <string>
+#include <vector>
+
+#include "risk/plot_style.hpp"
+#include "risk/var.hpp"
 
 namespace risk {
 
+using plot::Figure;
+using plot::Scale;
+
 namespace {
 
-std::string fmt(double v, int prec = 2) {
-  std::ostringstream os;
-  os.precision(prec);
-  os << std::fixed << v;
-  return os.str();
+std::string pct1(double v) {
+  return plot::percent(v, 1);
+}
+std::string pct2(double v) {
+  return plot::percent(v, 2);
 }
 
-// Escape the handful of characters that matter inside SVG text nodes.
-std::string esc(const std::string& s) {
-  std::string out;
-  for (char c : s) {
-    switch (c) {
-      case '&':
-        out += "&amp;";
-        break;
-      case '<':
-        out += "&lt;";
-        break;
-      case '>':
-        out += "&gt;";
-        break;
-      default:
-        out += c;
-    }
+// Colour per sector, assigned on first sight so an instrument keeps the same
+// colour in every figure of a report.
+std::string sector_color(const std::string& sector,
+                         std::map<std::string, std::size_t>& assigned) {
+  auto it = assigned.find(sector);
+  if (it == assigned.end()) {
+    const std::size_t next = assigned.size();
+    assigned[sector] = next;
+    return plot::categorical_color(next);
   }
-  return out;
+  return plot::categorical_color(it->second);
 }
 
-// Diverging blue-white-red colour for a correlation in [-1, 1].
-std::string corr_color(double r) {
-  r = std::clamp(r, -1.0, 1.0);
-  int red, green, blue;
-  if (r >= 0.0) {  // white -> red
-    red = 255;
-    green = static_cast<int>(255 * (1.0 - r));
-    blue = static_cast<int>(255 * (1.0 - r));
-  } else {  // white -> blue
-    red = static_cast<int>(255 * (1.0 + r));
-    green = static_cast<int>(255 * (1.0 + r));
-    blue = 255;
-  }
-  std::ostringstream os;
-  os << "rgb(" << red << "," << green << "," << blue << ")";
-  return os.str();
-}
+constexpr const char* kPassColor = "#009e73";
+constexpr const char* kFailColor = "#d55e00";
 
 }  // namespace
+
+// ---------------------------------------------------------------------------
+// Hierarchical clustering of the correlation matrix
+// ---------------------------------------------------------------------------
+
+std::vector<std::size_t> correlation_cluster_order(
+    const Eigen::MatrixXd& correlation) {
+  const auto n = static_cast<std::size_t>(correlation.rows());
+  if (n == 0) return {};
+  if (n == 1) return {0};
+
+  // Average-linkage agglomerative clustering on d(i,j) = 1 - rho(i,j), which
+  // runs from 0 for a perfectly correlated pair to 2 for a perfectly
+  // anticorrelated one. Ordering the axes this way lets the asset-class
+  // blocks appear on their own instead of being pointed out in a caption.
+  std::vector<std::vector<std::size_t>> clusters;
+  clusters.reserve(n);
+  for (std::size_t i = 0; i < n; ++i) clusters.push_back({i});
+
+  auto average_distance = [&](const std::vector<std::size_t>& a,
+                              const std::vector<std::size_t>& b) {
+    double total = 0.0;
+    for (std::size_t i : a) {
+      for (std::size_t j : b) {
+        total += 1.0 - correlation(static_cast<Eigen::Index>(i),
+                                   static_cast<Eigen::Index>(j));
+      }
+    }
+    return total / static_cast<double>(a.size() * b.size());
+  };
+
+  while (clusters.size() > 1) {
+    double best = std::numeric_limits<double>::infinity();
+    std::size_t bi = 0;
+    std::size_t bj = 1;
+    for (std::size_t i = 0; i < clusters.size(); ++i) {
+      for (std::size_t j = i + 1; j < clusters.size(); ++j) {
+        const double d = average_distance(clusters[i], clusters[j]);
+        if (d < best) {
+          best = d;
+          bi = i;
+          bj = j;
+        }
+      }
+    }
+    // Merge j into i, preserving within-cluster order, then drop j.
+    clusters[bi].insert(clusters[bi].end(), clusters[bj].begin(),
+                        clusters[bj].end());
+    clusters.erase(clusters.begin() + static_cast<std::ptrdiff_t>(bj));
+  }
+  return clusters.front();
+}
 
 std::string svg_correlation_heatmap(const Eigen::MatrixXd& correlation,
-                                    const std::vector<std::string>& names) {
-  const int n = static_cast<int>(correlation.rows());
-  const int cell = 70;
-  const int margin = 90;
-  const int w = margin + n * cell + 20;
-  const int h = margin + n * cell + 20;
+                                    const std::vector<std::string>& names,
+                                    const std::string& source) {
+  const auto n = static_cast<int>(correlation.rows());
+  const std::vector<std::size_t> order = correlation_cluster_order(correlation);
 
-  std::ostringstream s;
-  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w
-    << "\" height=\"" << h << "\" font-family=\"sans-serif\">\n";
-  s << "<rect width=\"" << w << "\" height=\"" << h << "\" fill=\"white\"/>\n";
-  s << "<text x=\"" << margin
-    << "\" y=\"30\" font-size=\"18\" font-weight=\"bold\">"
-    << "Correlation matrix</text>\n";
+  const int cell = 44;
+  const double grid_left = 138.0;
+  const double grid_top = 100.0;
+  const int width = static_cast<int>(grid_left) + n * cell + 190;
+  const int height = static_cast<int>(grid_top) + n * cell + 96;
 
-  for (int i = 0; i < n; ++i) {
-    // Row label (left) and column label (top).
-    const int y = margin + i * cell;
-    const int x = margin + i * cell;
-    s << "<text x=\"" << (margin - 10) << "\" y=\"" << (y + cell / 2 + 4)
-      << "\" font-size=\"13\" text-anchor=\"end\">" << esc(names[i])
-      << "</text>\n";
-    s << "<text x=\"" << (x + cell / 2) << "\" y=\"" << (margin - 10)
-      << "\" font-size=\"13\" text-anchor=\"middle\">" << esc(names[i])
-      << "</text>\n";
-  }
-
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < n; ++j) {
-      const double r = correlation(i, j);
-      const int x = margin + j * cell;
-      const int y = margin + i * cell;
-      s << "<rect x=\"" << x << "\" y=\"" << y << "\" width=\"" << cell
-        << "\" height=\"" << cell << "\" fill=\"" << corr_color(r)
-        << "\" stroke=\"#888\"/>\n";
-      s << "<text x=\"" << (x + cell / 2) << "\" y=\"" << (y + cell / 2 + 4)
-        << "\" font-size=\"12\" text-anchor=\"middle\">" << fmt(r, 2)
-        << "</text>\n";
-    }
-  }
-  s << "</svg>\n";
-  return s.str();
-}
-
-std::string svg_risk_contribution_bars(const RiskAttribution& a) {
-  const int n = static_cast<int>(a.percent.size());
-  const int row = 40;
-  const int margin_left = 90;
-  const int margin_top = 60;
-  const int plot_w = 360;
-  const int w = margin_left + plot_w + 80;
-  const int h = margin_top + n * row + 40;
-  const int zero_x = margin_left + plot_w / 4;  // leave room for negative bars
-
-  // Scale: max absolute percentage sets the full bar length.
-  double maxabs = 0.0;
-  for (int i = 0; i < n; ++i) maxabs = std::max(maxabs, std::abs(a.percent(i)));
-  if (maxabs <= 0.0) maxabs = 1.0;
-  const double scale = (plot_w * 0.7) / maxabs;
-
-  std::ostringstream s;
-  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w
-    << "\" height=\"" << h << "\" font-family=\"sans-serif\">\n";
-  s << "<rect width=\"" << w << "\" height=\"" << h << "\" fill=\"white\"/>\n";
-  s << "<text x=\"20\" y=\"30\" font-size=\"18\" font-weight=\"bold\">"
-    << "Percentage risk contribution by position</text>\n";
-  s << "<line x1=\"" << zero_x << "\" y1=\"" << (margin_top - 10) << "\" x2=\""
-    << zero_x << "\" y2=\"" << (margin_top + n * row)
-    << "\" stroke=\"#333\"/>\n";
-
-  for (int i = 0; i < n; ++i) {
-    const double pct = a.percent(i);
-    const int y = margin_top + i * row;
-    const int len = static_cast<int>(std::abs(pct) * scale);
-    const int x = (pct >= 0.0) ? zero_x : zero_x - len;
-    const char* fill = (pct >= 0.0) ? "#d62728" : "#2ca02c";
-    s << "<rect x=\"" << x << "\" y=\"" << (y + 6) << "\" width=\"" << len
-      << "\" height=\"" << (row - 16) << "\" fill=\"" << fill << "\"/>\n";
-    s << "<text x=\"" << (margin_left - 12) << "\" y=\"" << (y + row / 2 + 2)
-      << "\" font-size=\"13\" text-anchor=\"end\">"
-      << esc(a.names[static_cast<std::size_t>(i)]) << "</text>\n";
-    const int lx = (pct >= 0.0) ? (zero_x + len + 6) : (zero_x - len - 6);
-    const char* anchor = (pct >= 0.0) ? "start" : "end";
-    s << "<text x=\"" << lx << "\" y=\"" << (y + row / 2 + 2)
-      << "\" font-size=\"12\" text-anchor=\"" << anchor << "\">"
-      << fmt(pct * 100.0, 1) << "%</text>\n";
-  }
-  s << "</svg>\n";
-  return s.str();
-}
-
-std::string svg_return_histogram(const Eigen::VectorXd& r, double var,
-                                 double cvar, double confidence, int bins) {
-  if (r.size() == 0) throw std::invalid_argument("svg_return_histogram: empty");
-  const double lo = r.minCoeff();
-  const double hi = r.maxCoeff();
-  const double span = (hi > lo) ? (hi - lo) : 1.0;
-  const double bw = span / bins;
-
-  std::vector<int> counts(bins, 0);
-  for (Eigen::Index k = 0; k < r.size(); ++k) {
-    int b = static_cast<int>((r(k) - lo) / bw);
-    b = std::clamp(b, 0, bins - 1);
-    counts[static_cast<std::size_t>(b)]++;
-  }
-  const int maxc = std::max(1, *std::max_element(counts.begin(), counts.end()));
-
-  const int margin = 60;
-  const int plot_w = 600;
-  const int plot_h = 280;
-  const int w = margin + plot_w + 30;
-  const int h = margin + plot_h + 70;
-
-  auto x_of = [&](double val) { return margin + (val - lo) / span * plot_w; };
-
-  std::ostringstream s;
-  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w
-    << "\" height=\"" << h << "\" font-family=\"sans-serif\">\n";
-  s << "<rect width=\"" << w << "\" height=\"" << h << "\" fill=\"white\"/>\n";
-  s << "<text x=\"" << margin
-    << "\" y=\"30\" font-size=\"18\" font-weight=\"bold\">"
-    << "Portfolio return distribution (" << fmt(confidence * 100, 0)
-    << "% VaR / CVaR)</text>\n";
-
-  // Bars.
-  for (int b = 0; b < bins; ++b) {
-    const double x0 = margin + static_cast<double>(b) / bins * plot_w;
-    const double bar_h =
-        static_cast<double>(counts[static_cast<std::size_t>(b)]) / maxc *
-        plot_h;
-    s << "<rect x=\"" << fmt(x0, 1) << "\" y=\""
-      << fmt(margin + plot_h - bar_h, 1) << "\" width=\""
-      << fmt(plot_w / static_cast<double>(bins) - 1.0, 1) << "\" height=\""
-      << fmt(bar_h, 1) << "\" fill=\"#9ecae1\"/>\n";
-  }
-
-  // Axis baseline.
-  s << "<line x1=\"" << margin << "\" y1=\"" << (margin + plot_h) << "\" x2=\""
-    << (margin + plot_w) << "\" y2=\"" << (margin + plot_h)
-    << "\" stroke=\"#333\"/>\n";
-
-  // VaR / CVaR markers at returns -var and -cvar. Labels are staggered
-  // vertically (and anchored away from the line) so they don't collide when the
-  // two levels sit close together.
-  auto vline = [&](double val, const char* color, const std::string& label,
-                   int label_y, const char* anchor, double dx) {
-    const double x = x_of(val);
-    s << "<line x1=\"" << fmt(x, 1) << "\" y1=\"" << margin << "\" x2=\""
-      << fmt(x, 1) << "\" y2=\"" << (margin + plot_h) << "\" stroke=\"" << color
-      << "\" stroke-width=\"2\" stroke-dasharray=\"5,3\"/>\n";
-    s << "<text x=\"" << fmt(x + dx, 1) << "\" y=\"" << label_y
-      << "\" font-size=\"12\" fill=\"" << color << "\" text-anchor=\"" << anchor
-      << "\">" << esc(label) << "</text>\n";
-  };
-  // CVaR is the deeper (more negative) level, so its line is to the left: label
-  // it to the left; label VaR to the right, one line lower.
-  vline(-cvar, "#7f0000", "CVaR " + fmt(cvar * 100, 2) + "%", margin + 14,
-        "end", -5);
-  vline(-var, "#d62728", "VaR " + fmt(var * 100, 2) + "%", margin + 32, "start",
-        5);
-
-  // x-axis end labels.
-  s << "<text x=\"" << margin << "\" y=\"" << (margin + plot_h + 20)
-    << "\" font-size=\"11\" text-anchor=\"middle\">" << fmt(lo * 100, 1)
-    << "%</text>\n";
-  s << "<text x=\"" << (margin + plot_w) << "\" y=\"" << (margin + plot_h + 20)
-    << "\" font-size=\"11\" text-anchor=\"middle\">" << fmt(hi * 100, 1)
-    << "%</text>\n";
-  s << "</svg>\n";
-  return s.str();
-}
-
-namespace {
-// A small fixed palette keyed by sector label.
-std::string sector_color(const std::string& sector) {
-  static const std::vector<std::pair<std::string, std::string>> palette = {
-      {"Equity", "#1f77b4"},
-      {"Rates", "#2ca02c"},
-      {"Credit", "#ff7f0e"},
-      {"Commodity", "#9467bd"}};
-  for (const auto& [k, v] : palette)
-    if (k == sector) return v;
-  return "#7f7f7f";
-}
-}  // namespace
-
-std::string svg_asset_volatility(const std::vector<std::string>& names,
-                                 const std::vector<double>& annual_vol,
-                                 const std::vector<std::string>& sectors) {
-  const int n = static_cast<int>(names.size());
-  // Sort indices by descending volatility.
-  std::vector<int> idx(n);
-  for (int i = 0; i < n; ++i) idx[static_cast<std::size_t>(i)] = i;
-  std::sort(idx.begin(), idx.end(), [&](int a, int b) {
-    return annual_vol[static_cast<std::size_t>(a)] >
-           annual_vol[static_cast<std::size_t>(b)];
-  });
-
-  const int row = 26;
-  const int margin_left = 70;
-  const int margin_top = 60;
-  const int plot_w = 460;
-  const int w = margin_left + plot_w + 70;
-  const int h = margin_top + n * row + 60;
-
-  double maxv = 0.0;
-  for (double v : annual_vol) maxv = std::max(maxv, v);
-  if (maxv <= 0.0) maxv = 1.0;
-  const double scale = plot_w / maxv;
-
-  std::ostringstream s;
-  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w
-    << "\" height=\"" << h << "\" font-family=\"sans-serif\">\n";
-  s << "<rect width=\"" << w << "\" height=\"" << h << "\" fill=\"white\"/>\n";
-  s << "<text x=\"20\" y=\"30\" font-size=\"18\" font-weight=\"bold\">"
-    << "Annualized volatility by instrument</text>\n";
+  Figure fig("Correlations cluster into rates, credit, equity and FX blocks",
+             "Daily log-return correlations. Rows and columns ordered by "
+             "average-linkage clustering on 1 - rho; lower triangle only.",
+             width, height);
 
   for (int r = 0; r < n; ++r) {
-    const int i = idx[static_cast<std::size_t>(r)];
-    const double v = annual_vol[static_cast<std::size_t>(i)];
-    const int y = margin_top + r * row;
-    const int len = static_cast<int>(v * scale);
-    s << "<rect x=\"" << margin_left << "\" y=\"" << (y + 4) << "\" width=\""
-      << len << "\" height=\"" << (row - 8) << "\" fill=\""
-      << sector_color(sectors[static_cast<std::size_t>(i)]) << "\"/>\n";
-    s << "<text x=\"" << (margin_left - 8) << "\" y=\"" << (y + row / 2 + 3)
-      << "\" font-size=\"12\" text-anchor=\"end\">"
-      << esc(names[static_cast<std::size_t>(i)]) << "</text>\n";
-    s << "<text x=\"" << (margin_left + len + 6) << "\" y=\""
-      << (y + row / 2 + 3) << "\" font-size=\"11\">" << fmt(v * 100, 1)
-      << "%</text>\n";
+    const auto i =
+        static_cast<Eigen::Index>(order[static_cast<std::size_t>(r)]);
+    const double y = grid_top + r * cell;
+
+    fig.text(grid_left - 10.0, y + cell / 2.0 + 3.5,
+             names[static_cast<std::size_t>(i)], plot::kTickSize, plot::kInk,
+             "end");
+
+    for (int c = 0; c <= r; ++c) {
+      const auto j =
+          static_cast<Eigen::Index>(order[static_cast<std::size_t>(c)]);
+      const double x = grid_left + c * cell;
+      const double rho = correlation(i, j);
+
+      fig.rect(x, y, cell, cell, plot::diverging_color(rho, 0.0, 1.0),
+               "#ffffff", 1.0);
+      // White text on the saturated ends, dark ink in the pale middle, so the
+      // annotation never disappears into its own cell.
+      const char* ink = (std::abs(rho) > 0.62) ? "#ffffff" : plot::kInk;
+      fig.text(x + cell / 2.0, y + cell / 2.0 + 3.0, plot::fixed(rho, 2),
+               plot::kAnnotationSize, ink, "middle");
+    }
+
+    // Column label below the diagonal cell, rotated to stay readable.
+    const double dx = grid_left + r * cell + cell / 2.0;
+    std::ostringstream os;
+    os << R"SVG(<text transform="translate()SVG" << plot::fixed(dx, 2) << ","
+       << plot::fixed(grid_top + n * cell + 12.0, 2)
+       << R"SVG() rotate(-55)" font-size=")SVG"
+       << plot::fixed(plot::kTickSize, 1) << R"SVG(" fill=")SVG" << plot::kInk
+       << R"SVG(" text-anchor="end">)SVG"
+       << plot::escape(names[static_cast<std::size_t>(i)]) << "</text>\n";
+    fig.raw(os.str());
   }
 
-  // Legend.
-  const std::vector<std::string> secs = {"Equity", "Rates", "Credit",
-                                         "Commodity"};
-  int lx = margin_left;
-  const int ly = margin_top + n * row + 22;
-  for (const auto& sec : secs) {
-    s << "<rect x=\"" << lx << "\" y=\"" << (ly - 10) << "\" width=\"12\" "
-      << "height=\"12\" fill=\"" << sector_color(sec) << "\"/>\n";
-    s << "<text x=\"" << (lx + 16) << "\" y=\"" << ly << "\" font-size=\"11\">"
-      << sec << "</text>\n";
-    lx += 110;
+  // Colour key.
+  const double key_x = grid_left + n * cell + 46.0;
+  const double key_top = grid_top;
+  const double key_h = std::min(240.0, static_cast<double>(n * cell));
+  const int steps = 60;
+  for (int s = 0; s < steps; ++s) {
+    const double t = 1.0 - 2.0 * static_cast<double>(s) / (steps - 1);
+    fig.rect(key_x, key_top + key_h * s / steps, 16.0, key_h / steps + 0.6,
+             plot::diverging_color(t, 0.0, 1.0));
   }
-  s << "</svg>\n";
-  return s.str();
+  fig.text(key_x + 22.0, key_top + 8.0, "+1.0", plot::kAnnotationSize,
+           plot::kMutedInk);
+  fig.text(key_x + 22.0, key_top + key_h / 2.0 + 3.0, "0.0",
+           plot::kAnnotationSize, plot::kMutedInk);
+  fig.text(key_x + 22.0, key_top + key_h, "-1.0", plot::kAnnotationSize,
+           plot::kMutedInk);
+  fig.text(key_x, key_top - 12.0, "correlation", plot::kAnnotationSize,
+           plot::kInk);
+
+  return fig.str(source);
 }
+
+// ---------------------------------------------------------------------------
+// Weight against risk share
+// ---------------------------------------------------------------------------
 
 std::string svg_weight_vs_risk(const std::vector<std::string>& names,
                                const std::vector<double>& weights,
-                               const std::vector<double>& pct_risk) {
-  const int n = static_cast<int>(names.size());
-  const int row = 34;
-  const int margin_left = 70;
-  const int margin_top = 70;
-  const int plot_w = 380;
-  const int w = margin_left + plot_w + 190;
-  const int h = margin_top + n * row + 30;
+                               const std::vector<double>& pct_risk,
+                               const std::string& source) {
+  const std::size_t n = names.size();
+  const int height = static_cast<int>(180 + n * 34);
+  Figure fig("Risk share and capital share come apart across the book",
+             "Each rule spans a position's share of capital and its share of "
+             "portfolio volatility. Sorted by the gap, widest first.",
+             plot::kDefaultWidth, height);
+  fig.set_margins(150.0, 210.0, 92.0, 70.0);
 
-  double maxv = 0.0;
-  for (int i = 0; i < n; ++i)
-    maxv = std::max({maxv, weights[static_cast<std::size_t>(i)],
-                     pct_risk[static_cast<std::size_t>(i)]});
-  if (maxv <= 0.0) maxv = 1.0;
-  const double scale = plot_w / maxv;
+  // Sorting by (risk - capital) puts the positions punching above their
+  // weight at the top without anyone choosing an order by hand.
+  std::vector<std::size_t> idx(n);
+  std::iota(idx.begin(), idx.end(), 0);
+  std::ranges::sort(idx, [&](std::size_t a, std::size_t b) {
+    return (pct_risk[a] - weights[a]) > (pct_risk[b] - weights[b]);
+  });
 
-  std::ostringstream s;
-  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w
-    << "\" height=\"" << h << "\" font-family=\"sans-serif\">\n";
-  s << "<rect width=\"" << w << "\" height=\"" << h << "\" fill=\"white\"/>\n";
-  s << "<text x=\"20\" y=\"30\" font-size=\"18\" font-weight=\"bold\">"
-    << "Capital weight vs. risk share</text>\n";
-  // Legend.
-  s << "<rect x=\"70\" y=\"42\" width=\"12\" height=\"12\" fill=\"#bbbbbb\"/>"
-    << "<text x=\"88\" y=\"52\" font-size=\"11\">Weight</text>\n";
-  s << "<rect x=\"160\" y=\"42\" width=\"12\" height=\"12\" fill=\"#d62728\"/>"
-    << "<text x=\"178\" y=\"52\" font-size=\"11\">% of risk</text>\n";
-
-  for (int i = 0; i < n; ++i) {
-    const int y = margin_top + i * row;
-    const int wlen =
-        static_cast<int>(weights[static_cast<std::size_t>(i)] * scale);
-    const int rlen =
-        static_cast<int>(pct_risk[static_cast<std::size_t>(i)] * scale);
-    s << "<rect x=\"" << margin_left << "\" y=\"" << (y + 3) << "\" width=\""
-      << wlen << "\" height=\"11\" fill=\"#bbbbbb\"/>\n";
-    s << "<rect x=\"" << margin_left << "\" y=\"" << (y + 16) << "\" width=\""
-      << rlen << "\" height=\"11\" fill=\"#d62728\"/>\n";
-    s << "<text x=\"" << (margin_left - 8) << "\" y=\"" << (y + 17)
-      << "\" font-size=\"12\" text-anchor=\"end\">"
-      << esc(names[static_cast<std::size_t>(i)]) << "</text>\n";
-    s << "<text x=\"" << (margin_left + std::max(wlen, rlen) + 6) << "\" y=\""
-      << (y + 17) << "\" font-size=\"10\" fill=\"#555\">"
-      << fmt(pct_risk[static_cast<std::size_t>(i)] * 100, 0) << "% risk / "
-      << fmt(weights[static_cast<std::size_t>(i)] * 100, 0) << "% wt</text>\n";
+  double lo = 0.0;
+  double hi = 0.0;
+  for (std::size_t i = 0; i < n; ++i) {
+    lo = std::min({lo, weights[i], pct_risk[i]});
+    hi = std::max({hi, weights[i], pct_risk[i]});
   }
-  s << "</svg>\n";
-  return s.str();
+  plot::pad_range(lo, hi, 0.08);
+
+  const Scale x{.domain_lo = lo,
+                .domain_hi = hi,
+                .range_lo = fig.plot_left(),
+                .range_hi = fig.plot_right()};
+
+  for (double t : plot::nice_ticks(lo, hi, 7)) {
+    fig.line(x(t), fig.plot_top(), x(t), fig.plot_bottom(), plot::kGrid, 1.0);
+    fig.text(x(t), fig.plot_bottom() + 17.0, pct1(t), plot::kTickSize,
+             plot::kMutedInk, "middle");
+  }
+  if (lo < 0.0 && hi > 0.0) {
+    fig.line(x(0.0), fig.plot_top(), x(0.0), fig.plot_bottom(), plot::kAxis,
+             1.2);
+  }
+  fig.text((fig.plot_left() + fig.plot_right()) / 2.0, fig.plot_bottom() + 40.0,
+           "share of the book (%)", plot::kAxisLabelSize, plot::kInk, "middle");
+
+  const std::string capital_color = plot::categorical_color(5);
+  const std::string risk_color = plot::categorical_color(1);
+  const double row = fig.plot_height() / static_cast<double>(n);
+
+  for (std::size_t k = 0; k < n; ++k) {
+    const std::size_t i = idx[k];
+    const double y = fig.plot_top() + row * (static_cast<double>(k) + 0.5);
+    const double xw = x(weights[i]);
+    const double xr = x(pct_risk[i]);
+
+    fig.text(fig.plot_left() - 12.0, y + 3.5, names[i], plot::kTickSize,
+             plot::kInk, "end");
+    fig.line(xw, y, xr, y, plot::kFaintInk, 1.6);
+    fig.circle(xw, y, 5.0, capital_color);
+    fig.circle(xr, y, 5.0, risk_color);
+
+    const double gap = pct_risk[i] - weights[i];
+    const std::string sign = gap >= 0.0 ? "+" : "";
+    fig.text(fig.plot_right() + 14.0, y + 3.5,
+             sign + plot::fixed(gap * 100.0, 1) + "pp risk over capital",
+             plot::kAnnotationSize, gap >= 0.0 ? risk_color : plot::kMutedInk,
+             "start");
+  }
+
+  // Direct labels on the top row rather than a legend.
+  {
+    const std::size_t i = idx.front();
+    const double y = fig.plot_top() + row * 0.5;
+    fig.text(x(weights[i]), y - 13.0, "capital", plot::kAnnotationSize,
+             capital_color, "middle");
+    fig.text(x(pct_risk[i]), y - 13.0, "risk", plot::kAnnotationSize,
+             risk_color, "middle");
+  }
+
+  return fig.str(source);
 }
 
-std::string svg_estimator_var_comparison(
-    const std::vector<std::string>& methods, const std::vector<double>& var95,
-    const std::vector<double>& var99) {
-  const int g = static_cast<int>(methods.size());
-  const int margin = 60;
-  const int plot_h = 240;
-  const int group_w = 130;
-  const int w = margin + g * group_w + 40;
-  const int h = margin + plot_h + 70;
+// ---------------------------------------------------------------------------
+// Risk contribution per position
+// ---------------------------------------------------------------------------
 
-  double maxv = 0.0;
-  for (double v : var99) maxv = std::max(maxv, v);
-  for (double v : var95) maxv = std::max(maxv, v);
-  if (maxv <= 0.0) maxv = 1.0;
-  const double scale = plot_h / (maxv * 1.15);
+std::string svg_risk_contribution_bars(const RiskAttribution& a,
+                                       const std::string& source) {
+  const auto n = static_cast<std::size_t>(a.percent.size());
+  const int height = static_cast<int>(200 + n * 34);
+  Figure fig("A handful of positions carry most of the volatility",
+             "Component contribution to portfolio volatility, "
+             "w_i (Sigma w)_i / sigma_p. Bars sum to 100%.",
+             plot::kDefaultWidth, height);
+  fig.set_margins(150.0, 210.0, 100.0, 74.0);
 
-  std::ostringstream s;
-  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w
-    << "\" height=\"" << h << "\" font-family=\"sans-serif\">\n";
-  s << "<rect width=\"" << w << "\" height=\"" << h << "\" fill=\"white\"/>\n";
-  s << "<text x=\"20\" y=\"30\" font-size=\"18\" font-weight=\"bold\">"
-    << "1-day VaR by covariance estimator</text>\n";
-  // Legend.
-  s << "<rect x=\"60\" y=\"40\" width=\"12\" height=\"12\" fill=\"#6baed6\"/>"
-    << "<text x=\"76\" y=\"50\" font-size=\"11\">95%</text>\n";
-  s << "<rect x=\"130\" y=\"40\" width=\"12\" height=\"12\" fill=\"#08519c\"/>"
-    << "<text x=\"146\" y=\"50\" font-size=\"11\">99%</text>\n";
+  std::vector<std::size_t> idx(n);
+  std::iota(idx.begin(), idx.end(), 0);
+  std::ranges::sort(idx, [&](std::size_t p, std::size_t q) {
+    return a.percent(static_cast<Eigen::Index>(p)) >
+           a.percent(static_cast<Eigen::Index>(q));
+  });
 
-  const int base = margin + plot_h;
-  s << "<line x1=\"" << margin << "\" y1=\"" << base << "\" x2=\""
-    << (margin + g * group_w) << "\" y2=\"" << base << "\" stroke=\"#333\"/>\n";
-
-  for (int i = 0; i < g; ++i) {
-    const int gx = margin + i * group_w + 20;
-    const int h95 =
-        static_cast<int>(var95[static_cast<std::size_t>(i)] * scale);
-    const int h99 =
-        static_cast<int>(var99[static_cast<std::size_t>(i)] * scale);
-    s << "<rect x=\"" << gx << "\" y=\"" << (base - h95) << "\" width=\"36\" "
-      << "height=\"" << h95 << "\" fill=\"#6baed6\"/>\n";
-    s << "<rect x=\"" << (gx + 42) << "\" y=\"" << (base - h99)
-      << "\" width=\"36\" "
-      << "height=\"" << h99 << "\" fill=\"#08519c\"/>\n";
-    s << "<text x=\"" << (gx + 18) << "\" y=\"" << (base - h95 - 4)
-      << "\" font-size=\"10\" text-anchor=\"middle\">"
-      << fmt(var95[static_cast<std::size_t>(i)] * 100, 2) << "%</text>\n";
-    s << "<text x=\"" << (gx + 60) << "\" y=\"" << (base - h99 - 4)
-      << "\" font-size=\"10\" text-anchor=\"middle\">"
-      << fmt(var99[static_cast<std::size_t>(i)] * 100, 2) << "%</text>\n";
-    s << "<text x=\"" << (gx + 39) << "\" y=\"" << (base + 18)
-      << "\" font-size=\"12\" text-anchor=\"middle\">"
-      << esc(methods[static_cast<std::size_t>(i)]) << "</text>\n";
+  double lo = 0.0;
+  double hi = 0.0;
+  for (Eigen::Index i = 0; i < a.percent.size(); ++i) {
+    lo = std::min(lo, a.percent(i));
+    hi = std::max(hi, a.percent(i));
   }
-  s << "</svg>\n";
-  return s.str();
+  const double equal = 1.0 / static_cast<double>(n);
+  hi = std::max(hi, equal);
+  plot::pad_range(lo, hi, 0.10);
+
+  const Scale x{.domain_lo = lo,
+                .domain_hi = hi,
+                .range_lo = fig.plot_left(),
+                .range_hi = fig.plot_right()};
+  for (double t : plot::nice_ticks(lo, hi, 7)) {
+    fig.line(x(t), fig.plot_top(), x(t), fig.plot_bottom(), plot::kGrid, 1.0);
+    fig.text(x(t), fig.plot_bottom() + 17.0, pct1(t), plot::kTickSize,
+             plot::kMutedInk, "middle");
+  }
+  fig.text((fig.plot_left() + fig.plot_right()) / 2.0, fig.plot_bottom() + 40.0,
+           "share of portfolio volatility (%)", plot::kAxisLabelSize,
+           plot::kInk, "middle");
+
+  const double zero_x = x(0.0);
+  const double row = fig.plot_height() / static_cast<double>(n);
+  const std::string add_color = plot::categorical_color(1);
+  const std::string cut_color = plot::categorical_color(2);
+
+  for (std::size_t k = 0; k < n; ++k) {
+    const auto i = static_cast<Eigen::Index>(idx[k]);
+    const double v = a.percent(i);
+    const double y = fig.plot_top() + row * static_cast<double>(k);
+    const bool reducing = v < 0.0;
+    fig.rect(zero_x, y + row * 0.18, x(v) - zero_x, row * 0.64,
+             reducing ? cut_color : add_color);
+    fig.text(fig.plot_left() - 12.0, y + row * 0.5 + 3.5,
+             a.names[static_cast<std::size_t>(i)], plot::kTickSize, plot::kInk,
+             "end");
+    const double label_x = reducing ? x(v) - 8.0 : x(v) + 8.0;
+    fig.text(label_x, y + row * 0.5 + 3.5, pct1(v), plot::kAnnotationSize,
+             plot::kMutedInk, reducing ? "end" : "start");
+  }
+
+  // Reference line at 1/N: what equal contribution would look like.
+  fig.line(x(equal), fig.plot_top() - 6.0, x(equal), fig.plot_bottom(),
+           plot::kMutedInk, 1.2, "5 3");
+  fig.text(x(equal), fig.plot_top() - 12.0,
+           "equal contribution 1/N = " + pct1(equal), plot::kAnnotationSize,
+           plot::kMutedInk, "middle");
+
+  // Concentration summary on the chart, not in the caption.
+  const double box_x = fig.plot_right() + 16.0;
+  fig.text(box_x, fig.plot_top() + 14.0,
+           "effective bets " +
+               plot::fixed(a.concentration.effective_num_bets, 1) + " of " +
+               std::to_string(n),
+           plot::kAnnotationSize, plot::kInk);
+  fig.text(box_x, fig.plot_top() + 29.0,
+           "top: " + a.concentration.max_contributor + " " +
+               pct1(a.concentration.max_contribution),
+           plot::kAnnotationSize, plot::kMutedInk);
+  fig.text(box_x, fig.plot_top() + 44.0,
+           "risk-share HHI " + plot::fixed(a.concentration.herfindahl, 3),
+           plot::kAnnotationSize, plot::kMutedInk);
+
+  return fig.str(source);
 }
+
+// ---------------------------------------------------------------------------
+// Return distribution
+// ---------------------------------------------------------------------------
+
+std::string svg_return_histogram(const Eigen::VectorXd& r, double var,
+                                 double cvar, double confidence,
+                                 const std::string& source, int bins) {
+  const auto n = static_cast<double>(r.size());
+  const double mean = r.mean();
+  const double sd = std::sqrt((r.array() - mean).square().sum() / (n - 1.0));
+
+  // The title states what the data says, computed here rather than asserted,
+  // so refreshing the sample cannot leave a stale claim on the chart.
+  const double m2 = (r.array() - mean).square().sum() / n;
+  const double excess_kurtosis =
+      (m2 > 0.0) ? (r.array() - mean).pow(4).sum() / n / (m2 * m2) - 3.0 : 0.0;
+  const std::string title =
+      excess_kurtosis > 0.5
+          ? "The loss tail is heavier than a normal of the same variance"
+          : "The return distribution is close to normal";
+  std::ostringstream sub;
+  sub << "Daily portfolio log returns against the fitted normal density. "
+      << "Excess kurtosis " << plot::fixed(excess_kurtosis, 2) << " on "
+      << static_cast<long>(n) << " observations.";
+
+  Figure fig(title, sub.str(), plot::kDefaultWidth, plot::kDefaultHeight);
+  fig.set_margins(92.0, 46.0, 92.0, 82.0);
+
+  double lo = r.minCoeff();
+  double hi = r.maxCoeff();
+  plot::pad_range(lo, hi, 0.04);
+
+  std::vector<int> counts(static_cast<std::size_t>(bins), 0);
+  const double bin_w = (hi - lo) / bins;
+  for (Eigen::Index i = 0; i < r.size(); ++i) {
+    auto b = static_cast<int>((r(i) - lo) / bin_w);
+    b = std::clamp(b, 0, bins - 1);
+    ++counts[static_cast<std::size_t>(b)];
+  }
+  const int max_count = *std::ranges::max_element(counts);
+
+  // A density y-axis, so the histogram and the fitted curve share a scale.
+  const double max_density = static_cast<double>(max_count) / (n * bin_w);
+  const double y_hi = max_density * 1.12;
+  const Scale x{.domain_lo = lo,
+                .domain_hi = hi,
+                .range_lo = fig.plot_left(),
+                .range_hi = fig.plot_right()};
+  const Scale y{.domain_lo = 0.0,
+                .domain_hi = y_hi,
+                .range_lo = fig.plot_bottom(),
+                .range_hi = fig.plot_top()};
+
+  fig.y_axis(y, plot::nice_ticks(0.0, y_hi, 6), "density", nullptr);
+  fig.x_axis(x, plot::nice_ticks(lo, hi, 9), "daily return (%)", &pct1);
+
+  const std::string bar_color = plot::categorical_color(5);
+  const std::string tail_color = plot::categorical_color(1);
+  for (int b = 0; b < bins; ++b) {
+    const double left = lo + b * bin_w;
+    const double density =
+        static_cast<double>(counts[static_cast<std::size_t>(b)]) / (n * bin_w);
+    if (density <= 0.0) continue;
+    // Bins entirely beyond -VaR are the exceptions; colouring them ties this
+    // figure to the backtest without needing a second chart.
+    const bool in_tail = (left + bin_w) <= -var;
+    fig.rect(x(left) + 0.5, y(density), x(left + bin_w) - x(left) - 1.0,
+             fig.plot_bottom() - y(density), in_tail ? tail_color : bar_color);
+  }
+
+  // Fitted normal density at the same mean and variance.
+  std::vector<std::pair<double, double>> curve;
+  const int samples = 260;
+  curve.reserve(static_cast<std::size_t>(samples));
+  for (int i = 0; i < samples; ++i) {
+    const double v = lo + (hi - lo) * i / (samples - 1);
+    const double d = normal_pdf((v - mean) / sd) / sd;
+    curve.emplace_back(x(v), y(d));
+  }
+  fig.polyline(curve, plot::kInk, 1.8);
+
+  const int conf_pct = static_cast<int>(std::lround(confidence * 100.0));
+  // CVaR always sits deeper in the tail than VaR, so its line is to the left.
+  // Labelling CVaR leftward and VaR rightward keeps each clear of the other's
+  // vertical rule; anchoring both the same way put one label straight through
+  // the other's line.
+  auto marker = [&](double level, const std::string& label,
+                    const std::string& color, double label_dy, bool to_right) {
+    const double px = x(-level);
+    fig.line(px, fig.plot_top(), px, fig.plot_bottom(), color, 1.6, "6 4");
+    fig.text(px + (to_right ? 6.0 : -6.0), fig.plot_top() + label_dy,
+             label + " " + pct2(level), plot::kAnnotationSize, color,
+             to_right ? "start" : "end");
+  };
+  marker(var, std::to_string(conf_pct) + "% VaR", plot::categorical_color(0),
+         16.0, true);
+  marker(cvar, std::to_string(conf_pct) + "% CVaR", plot::categorical_color(3),
+         16.0, false);
+
+  fig.text(fig.plot_right() - 4.0, fig.plot_top() + 16.0, "fitted normal",
+           plot::kAnnotationSize, plot::kInk, "end");
+  fig.text(fig.plot_right() - 4.0, fig.plot_top() + 30.0,
+           "shaded bins breach VaR", plot::kAnnotationSize, tail_color, "end");
+
+  return fig.str(source);
+}
+
+// ---------------------------------------------------------------------------
+// Asset volatility
+// ---------------------------------------------------------------------------
+
+std::string svg_asset_volatility(const std::vector<std::string>& names,
+                                 const std::vector<double>& annual_vol,
+                                 const std::vector<double>& ci_lower,
+                                 const std::vector<double>& ci_upper,
+                                 const std::vector<std::string>& sectors,
+                                 const std::string& source) {
+  const std::size_t n = names.size();
+  const int height = static_cast<int>(200 + n * 34);
+
+  // State the spread the data actually shows instead of hardcoding a
+  // multiple that a data refresh could quietly falsify.
+  double vmin = std::numeric_limits<double>::infinity();
+  double vmax = 0.0;
+  for (double v : annual_vol) {
+    if (v > 0.0) vmin = std::min(vmin, v);
+    vmax = std::max(vmax, v);
+  }
+  const double ratio = (vmin > 0.0 && std::isfinite(vmin)) ? vmax / vmin : 0.0;
+  std::ostringstream vol_title;
+  vol_title << "Instrument volatility spans a " << plot::fixed(ratio, 0)
+            << "-fold range";
+
+  Figure fig(vol_title.str(),
+             "Annualized volatility of daily log returns with 95% bootstrap "
+             "intervals. Sorted, coloured by asset class.",
+             plot::kDefaultWidth, height);
+  fig.set_margins(150.0, 130.0, 100.0, 74.0);
+
+  std::vector<std::size_t> idx(n);
+  std::iota(idx.begin(), idx.end(), 0);
+  std::ranges::sort(idx, [&](std::size_t a, std::size_t b) {
+    return annual_vol[a] > annual_vol[b];
+  });
+
+  double hi = 0.0;
+  for (std::size_t i = 0; i < n; ++i) hi = std::max(hi, ci_upper[i]);
+  double lo = 0.0;
+  plot::pad_range(lo, hi, 0.06);
+  lo = 0.0;  // a volatility axis starts at zero or it misleads
+
+  const Scale x{.domain_lo = lo,
+                .domain_hi = hi,
+                .range_lo = fig.plot_left(),
+                .range_hi = fig.plot_right()};
+  for (double t : plot::nice_ticks(lo, hi, 7)) {
+    fig.line(x(t), fig.plot_top(), x(t), fig.plot_bottom(), plot::kGrid, 1.0);
+    fig.text(x(t), fig.plot_bottom() + 17.0, pct1(t), plot::kTickSize,
+             plot::kMutedInk, "middle");
+  }
+  fig.text((fig.plot_left() + fig.plot_right()) / 2.0, fig.plot_bottom() + 40.0,
+           "annualized volatility (%)", plot::kAxisLabelSize, plot::kInk,
+           "middle");
+
+  std::map<std::string, std::size_t> assigned;
+  const double row = fig.plot_height() / static_cast<double>(n);
+  for (std::size_t k = 0; k < n; ++k) {
+    const std::size_t i = idx[k];
+    const double y = fig.plot_top() + row * static_cast<double>(k);
+    const std::string color = sector_color(sectors[i], assigned);
+
+    fig.rect(x(0.0), y + row * 0.22, x(annual_vol[i]) - x(0.0), row * 0.56,
+             color);
+    // Error bar with caps. A volatility estimated on ~1,240 days carries real
+    // uncertainty, and drawing it is the difference between a number and an
+    // estimate.
+    const double ye = y + row * 0.5;
+    fig.line(x(ci_lower[i]), ye, x(ci_upper[i]), ye, plot::kInk, 1.4);
+    fig.line(x(ci_lower[i]), ye - 4.0, x(ci_lower[i]), ye + 4.0, plot::kInk,
+             1.4);
+    fig.line(x(ci_upper[i]), ye - 4.0, x(ci_upper[i]), ye + 4.0, plot::kInk,
+             1.4);
+
+    fig.text(fig.plot_left() - 12.0, ye + 3.5, names[i], plot::kTickSize,
+             plot::kInk, "end");
+    fig.text(x(ci_upper[i]) + 9.0, ye + 3.5, pct1(annual_vol[i]),
+             plot::kAnnotationSize, plot::kMutedInk, "start");
+  }
+
+  // Legend: one swatch per asset class along the top.
+  double lx = fig.plot_left();
+  for (const auto& [sector, slot] : assigned) {
+    fig.rect(lx, fig.plot_top() - 24.0, 10.0, 10.0,
+             plot::categorical_color(slot));
+    fig.text(lx + 15.0, fig.plot_top() - 15.0, sector, plot::kAnnotationSize,
+             plot::kMutedInk);
+    lx += 26.0 + 6.2 * static_cast<double>(sector.size());
+  }
+
+  return fig.str(source);
+}
+
+// ---------------------------------------------------------------------------
+// Estimator error against sample size
+// ---------------------------------------------------------------------------
+
+std::string svg_estimator_error(const std::vector<EstimatorErrorPoint>& points,
+                                const std::string& y_label,
+                                const std::string& title,
+                                const std::string& source) {
+  Figure fig(title,
+             "Mean error against a known covariance over Monte Carlo "
+             "replications, log-log. Bands are +/- 2 standard errors.",
+             plot::kDefaultWidth, plot::kDefaultHeight);
+  fig.set_margins(104.0, 190.0, 92.0, 82.0);
+  if (points.empty()) return fig.str(source);
+
+  std::vector<std::string> estimators;
+  std::set<int> sizes;
+  for (const auto& p : points) {
+    if (std::ranges::find(estimators, p.estimator) == estimators.end()) {
+      estimators.push_back(p.estimator);
+    }
+    sizes.insert(p.sample_size);
+  }
+
+  double ylo = std::numeric_limits<double>::infinity();
+  double yhi = 0.0;
+  for (const auto& p : points) {
+    ylo = std::min(ylo, std::max(1e-12, p.error - 2.0 * p.error_se));
+    yhi = std::max(yhi, p.error + 2.0 * p.error_se);
+  }
+  // Log axes: both error and sample size span more than a decade here, and a
+  // linear axis would flatten the whole left-hand side into the corner.
+  const double log_ylo = std::log10(ylo) - 0.08;
+  const double log_yhi = std::log10(yhi) + 0.08;
+  const double log_xlo = std::log10(static_cast<double>(*sizes.begin())) - 0.06;
+  const double log_xhi =
+      std::log10(static_cast<double>(*sizes.rbegin())) + 0.06;
+
+  const Scale x{.domain_lo = log_xlo,
+                .domain_hi = log_xhi,
+                .range_lo = fig.plot_left(),
+                .range_hi = fig.plot_right()};
+  const Scale y{.domain_lo = log_ylo,
+                .domain_hi = log_yhi,
+                .range_lo = fig.plot_bottom(),
+                .range_hi = fig.plot_top()};
+
+  // Decade gridlines with minor ticks between them, as a log axis requires.
+  // Labels go on the 1, 2 and 5 mantissas rather than decades alone: this
+  // data spans barely more than one decade, and labelling only powers of ten
+  // leaves the axis with a single number on it.
+  for (int e = static_cast<int>(std::floor(log_ylo));
+       e <= static_cast<int>(std::ceil(log_yhi)); ++e) {
+    for (int m = 1; m <= 9; ++m) {
+      const double value = m * std::pow(10.0, e);
+      const double v = std::log10(value);
+      if (v < log_ylo || v > log_yhi) continue;
+      const bool decade = (m == 1);
+      const bool labelled = (m == 1 || m == 2 || m == 5);
+      fig.line(fig.plot_left(), y(v), fig.plot_right(), y(v), plot::kGrid,
+               decade ? 1.0 : 0.5);
+      if (labelled) {
+        // These are loss fractions, so basis points read far better than
+        // either scientific notation or a string of leading zeros.
+        fig.text(fig.plot_left() - 9.0, y(v) + 3.5,
+                 plot::fixed(value * 1e4, value * 1e4 < 1.0 ? 2 : 1) + "bp",
+                 plot::kTickSize, plot::kMutedInk, "end");
+      }
+    }
+  }
+  fig.line(fig.plot_left(), fig.plot_top(), fig.plot_left(), fig.plot_bottom(),
+           plot::kAxis, 1.0);
+  fig.line(fig.plot_left(), fig.plot_bottom(), fig.plot_right(),
+           fig.plot_bottom(), plot::kAxis, 1.0);
+
+  for (int s : sizes) {
+    const double px = x(std::log10(static_cast<double>(s)));
+    fig.line(px, fig.plot_bottom(), px, fig.plot_bottom() + 4.0, plot::kAxis,
+             1.0);
+    fig.text(px, fig.plot_bottom() + 17.0, std::to_string(s), plot::kTickSize,
+             plot::kMutedInk, "middle");
+  }
+  fig.text((fig.plot_left() + fig.plot_right()) / 2.0, fig.plot_bottom() + 40.0,
+           "sample size, trading days (log scale)", plot::kAxisLabelSize,
+           plot::kInk, "middle");
+  {
+    std::ostringstream os;
+    os << R"SVG(<text transform="translate(26,)SVG"
+       << plot::fixed((fig.plot_top() + fig.plot_bottom()) / 2.0, 2)
+       << R"SVG() rotate(-90)" font-size=")SVG"
+       << plot::fixed(plot::kAxisLabelSize, 1) << R"SVG(" fill=")SVG"
+       << plot::kInk << R"SVG(" text-anchor="middle">)SVG"
+       << plot::escape(y_label + " (log scale)") << "</text>\n";
+    fig.raw(os.str());
+  }
+
+  std::vector<double> label_ys;
+  for (std::size_t e = 0; e < estimators.size(); ++e) {
+    const std::string& name = estimators[e];
+    const std::string color = plot::categorical_color(e);
+
+    std::vector<std::pair<double, double>> centre;
+    std::vector<std::pair<double, double>> upper;
+    std::vector<std::pair<double, double>> lower;
+    for (int s : sizes) {
+      for (const auto& p : points) {
+        if (p.estimator != name || p.sample_size != s) continue;
+        const double px = x(std::log10(static_cast<double>(s)));
+        centre.emplace_back(px, y(std::log10(std::max(1e-12, p.error))));
+        upper.emplace_back(
+            px, y(std::log10(std::max(1e-12, p.error + 2.0 * p.error_se))));
+        lower.emplace_back(
+            px, y(std::log10(std::max(1e-12, p.error - 2.0 * p.error_se))));
+      }
+    }
+    if (centre.empty()) continue;
+
+    // Confidence band as a closed polygon: up the upper edge, back along the
+    // lower one.
+    std::vector<std::pair<double, double>> band = upper;
+    band.insert(band.end(), lower.rbegin(), lower.rend());
+    std::ostringstream poly;
+    poly << "<polygon points=\"";
+    for (const auto& [px, py] : band) {
+      poly << plot::fixed(px, 2) << "," << plot::fixed(py, 2) << " ";
+    }
+    poly << "\" fill=\"" << color
+         << "\" fill-opacity=\"0.16\" stroke=\"none\"/>\n";
+    fig.raw(poly.str());
+
+    fig.polyline(centre, color, 2.2);
+    for (const auto& [px, py] : centre) fig.circle(px, py, 3.4, color);
+
+    // Direct label at the right end instead of a legend. Two estimators that
+    // land on top of each other -- which is exactly what Sample and
+    // Ledoit-Wolf do here -- would otherwise print one label over the other
+    // and read as a single smudge, so nudge each new label clear of the ones
+    // already placed.
+    double label_y = centre.back().second + 3.5;
+    bool moved = false;
+    for (double used : label_ys) {
+      if (std::abs(label_y - used) < 12.0) {
+        label_y = used + 12.0;
+        moved = true;
+      }
+    }
+    label_ys.push_back(label_y);
+    if (moved) {
+      // A short leader so a displaced label still points at its own line.
+      fig.line(centre.back().first + 5.0, centre.back().second,
+               centre.back().first + 10.0, label_y - 3.5, color, 0.9);
+    }
+    fig.text(centre.back().first + 12.0, label_y, name, plot::kAnnotationSize,
+             color, "start");
+  }
+
+  return fig.str(source);
+}
+
+// ---------------------------------------------------------------------------
+// VaR backtest
+// ---------------------------------------------------------------------------
 
 std::string svg_var_backtest(const Eigen::VectorXd& r, double var_level,
-                             double confidence) {
-  if (r.size() == 0) throw std::invalid_argument("svg_var_backtest: empty");
-  const int T = static_cast<int>(r.size());
-  const int margin = 55;
-  const int plot_w = 760;
-  const int plot_h = 240;
-  const int w = margin + plot_w + 20;
-  const int h = margin + plot_h + 50;
+                             double confidence, const KupiecResult& kupiec,
+                             const ChristoffersenResult& christoffersen,
+                             const BaselResult& basel,
+                             const std::string& source) {
+  const int conf_pct = static_cast<int>(std::lround(confidence * 100.0));
 
-  double maxabs = var_level;
-  for (Eigen::Index i = 0; i < r.size(); ++i)
-    maxabs = std::max(maxabs, std::abs(r(i)));
-  if (maxabs <= 0.0) maxabs = 1.0;
-  const int mid = margin + plot_h / 2;
-  const double yscale = (plot_h / 2.0) / (maxabs * 1.05);
-  auto x_of = [&](int t) {
-    return margin + static_cast<double>(t) / (T - 1) * plot_w;
-  };
-  auto y_of = [&](double v) { return mid - v * yscale; };
-
-  std::ostringstream s;
-  s << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << w
-    << "\" height=\"" << h << "\" font-family=\"sans-serif\">\n";
-  s << "<rect width=\"" << w << "\" height=\"" << h << "\" fill=\"white\"/>\n";
-  s << "<text x=\"20\" y=\"30\" font-size=\"18\" font-weight=\"bold\">"
-    << "VaR backtest: daily returns vs " << fmt(confidence * 100, 0)
-    << "% VaR</text>\n";
-
-  // Zero line and -VaR line.
-  s << "<line x1=\"" << margin << "\" y1=\"" << mid << "\" x2=\""
-    << (margin + plot_w) << "\" y2=\"" << mid << "\" stroke=\"#ccc\"/>\n";
-  const double yvar = y_of(-var_level);
-  s << "<line x1=\"" << margin << "\" y1=\"" << fmt(yvar, 1) << "\" x2=\""
-    << (margin + plot_w) << "\" y2=\"" << fmt(yvar, 1)
-    << "\" stroke=\"#d62728\" stroke-width=\"1.5\" "
-       "stroke-dasharray=\"6,3\"/>\n";
-  s << "<text x=\"" << (margin + 4) << "\" y=\"" << fmt(yvar - 4, 1)
-    << "\" font-size=\"11\" fill=\"#d62728\">-VaR " << fmt(var_level * 100, 2)
-    << "%</text>\n";
-
-  // Returns as thin vertical bars from zero; breaches in red.
-  int breaches = 0;
-  for (int t = 0; t < T; ++t) {
-    const double v = r(t);
-    const double x = x_of(t);
-    const bool breach = v < -var_level;
-    if (breach) ++breaches;
-    const char* col = breach ? "#d62728" : "#9ecae1";
-    s << "<line x1=\"" << fmt(x, 1) << "\" y1=\"" << mid << "\" x2=\""
-      << fmt(x, 1) << "\" y2=\"" << fmt(y_of(v), 1) << "\" stroke=\"" << col
-      << "\" stroke-width=\"1\"/>\n";
+  // The title reports the verdict the tests actually returned. Kupiec passing
+  // while Christoffersen rejects is the interesting case and the one this
+  // sample produces, but the chart must not claim it when it is not true.
+  std::string headline;
+  if (!kupiec.reject_at_95 && christoffersen.reject_independence_at_95) {
+    headline = "Exceptions arrive at the right rate but cluster in time";
+  } else if (kupiec.reject_at_95) {
+    headline = "The exception rate is wrong: this VaR is miscalibrated";
+  } else {
+    headline = "Exceptions arrive at the right rate and show no clustering";
   }
-  s << "<text x=\"" << margin << "\" y=\"" << (margin + plot_h + 35)
-    << "\" font-size=\"12\">" << breaches << " breaches in " << T
-    << " days (expected " << fmt((1.0 - confidence) * T, 0) << " at "
-    << fmt(confidence * 100, 0) << "% confidence)</text>\n";
-  s << "</svg>\n";
-  return s.str();
+
+  Figure fig(headline,
+             "Daily portfolio returns against the " + std::to_string(conf_pct) +
+                 "% VaR line. Red marks breach it; the shaded band is the "
+                 "trailing Basel supervisory window.",
+             plot::kDefaultWidth, plot::kDefaultHeight);
+  fig.set_margins(92.0, 300.0, 92.0, 82.0);
+
+  const auto n = static_cast<double>(r.size());
+  double lo = std::min(r.minCoeff(), -var_level);
+  double hi = r.maxCoeff();
+  plot::pad_range(lo, hi, 0.07);
+
+  const Scale x{.domain_lo = 0.0,
+                .domain_hi = n - 1.0,
+                .range_lo = fig.plot_left(),
+                .range_hi = fig.plot_right()};
+  const Scale y{.domain_lo = lo,
+                .domain_hi = hi,
+                .range_lo = fig.plot_bottom(),
+                .range_hi = fig.plot_top()};
+
+  // Basel window as a background band, drawn before the data.
+  if (basel.window_complete) {
+    const double start = n - static_cast<double>(basel.window);
+    const char* zone_fill = "#eef7ee";
+    if (basel.zone == BaselZone::Yellow) zone_fill = "#fdf6e3";
+    if (basel.zone == BaselZone::Red) zone_fill = "#fdeeee";
+    fig.rect(x(start), fig.plot_top(), fig.plot_right() - x(start),
+             fig.plot_height(), zone_fill);
+    // Bottom of the band, not the top: the statistics box starts at the top
+    // right and the two labels collided.
+    fig.text(x(start) + 6.0, fig.plot_bottom() - 8.0,
+             std::string("Basel 250d: ") + to_string(basel.zone) + ", " +
+                 std::to_string(basel.exceptions) + " exc.",
+             plot::kAnnotationSize, plot::kMutedInk);
+  }
+
+  fig.y_axis(y, plot::nice_ticks(lo, hi, 7), "daily return (%)", &pct1);
+  fig.x_axis(x, plot::nice_ticks(0.0, n - 1.0, 8), "trading day", nullptr);
+
+  std::vector<std::pair<double, double>> path;
+  path.reserve(static_cast<std::size_t>(r.size()));
+  for (Eigen::Index i = 0; i < r.size(); ++i) {
+    path.emplace_back(x(static_cast<double>(i)), y(r(i)));
+  }
+  fig.polyline(path, "#b9c6d2", 0.8);
+
+  fig.line(fig.plot_left(), y(-var_level), fig.plot_right(), y(-var_level),
+           plot::categorical_color(0), 1.8, "7 4");
+  fig.text(fig.plot_left() + 6.0, y(-var_level) - 6.0,
+           "-" + std::to_string(conf_pct) + "% VaR " + pct2(var_level),
+           plot::kAnnotationSize, plot::categorical_color(0));
+
+  const std::string breach = plot::categorical_color(1);
+  for (Eigen::Index i = 0; i < r.size(); ++i) {
+    if (r(i) < -var_level) {
+      fig.circle(x(static_cast<double>(i)), y(r(i)), 3.0, breach);
+    }
+  }
+
+  // The statistics box. This is what the previous version of this figure was
+  // missing entirely: a picture of breaches with no test attached proves
+  // nothing at all.
+  const double bx = fig.plot_right() + 22.0;
+  double by = fig.plot_top() + 16.0;
+  auto row = [&](const std::string& label, const std::string& value,
+                 const char* color = plot::kInk) {
+    fig.text(bx, by, label, plot::kAnnotationSize, plot::kMutedInk);
+    fig.text(bx + 258.0, by, value, plot::kAnnotationSize, color, "end");
+    by += 15.0;
+  };
+
+  fig.text(bx, by, "Backtest", plot::kAxisLabelSize, plot::kInk, "start",
+           "600");
+  by += 21.0;
+  row("observations", std::to_string(kupiec.observations));
+  row("exceptions", std::to_string(kupiec.exceptions));
+  row("expected",
+      plot::fixed(
+          kupiec.expected_rate * static_cast<double>(kupiec.observations), 1));
+  row("observed rate", pct2(kupiec.observed_rate));
+  by += 10.0;
+
+  fig.text(bx, by, "Kupiec, unconditional coverage", plot::kAnnotationSize,
+           plot::kInk, "start", "600");
+  by += 16.0;
+  row("LR statistic", plot::fixed(kupiec.lr_statistic, 3));
+  row("p-value", plot::fixed(kupiec.p_value, 3));
+  row("at 95%", kupiec.reject_at_95 ? "REJECT" : "pass",
+      kupiec.reject_at_95 ? kFailColor : kPassColor);
+  by += 10.0;
+
+  fig.text(bx, by, "Christoffersen, independence", plot::kAnnotationSize,
+           plot::kInk, "start", "600");
+  by += 16.0;
+  row("LR statistic", plot::fixed(christoffersen.lr_independence, 3));
+  row("p-value", plot::fixed(christoffersen.p_value_independence, 3));
+  row("at 95%", christoffersen.reject_independence_at_95 ? "REJECT" : "pass",
+      christoffersen.reject_independence_at_95 ? kFailColor : kPassColor);
+  by += 10.0;
+
+  fig.text(bx, by, "Conditional coverage", plot::kAnnotationSize, plot::kInk,
+           "start", "600");
+  by += 16.0;
+  row("LR statistic", plot::fixed(christoffersen.lr_conditional_coverage, 3));
+  row("p-value", plot::fixed(christoffersen.p_value_conditional_coverage, 3));
+  row("at 95%",
+      christoffersen.reject_conditional_coverage_at_95 ? "REJECT" : "pass",
+      christoffersen.reject_conditional_coverage_at_95 ? kFailColor
+                                                       : kPassColor);
+
+  return fig.str(source);
 }
 
-void write_figures(const Eigen::MatrixXd& correlation,
-                   const std::vector<std::string>& names,
-                   const RiskAttribution& attribution,
-                   const Eigen::VectorXd& portfolio_returns, double var,
-                   double cvar, double confidence, const std::string& dir) {
-  auto dump = [&](const std::string& file, const std::string& content) {
-    std::ofstream out(dir + "/" + file);
-    if (!out)
-      throw std::invalid_argument("write_figures: cannot write " + file);
-    out << content;
+// ---------------------------------------------------------------------------
+// Factor risk decomposition
+// ---------------------------------------------------------------------------
+
+std::string svg_factor_decomposition(const FactorDecomposition& d,
+                                     const std::string& source) {
+  struct Item {
+    std::string label;
+    double variance = 0.0;
   };
-  dump("correlation.svg", svg_correlation_heatmap(correlation, names));
-  dump("risk_contributions.svg", svg_risk_contribution_bars(attribution));
-  dump("return_distribution.svg",
-       svg_return_histogram(portfolio_returns, var, cvar, confidence));
+  std::vector<Item> items;
+  items.reserve(d.factors.size() + 1);
+  for (std::size_t k = 0; k < d.factors.size(); ++k) {
+    items.push_back(
+        {d.factors[k], d.variance_contribution(static_cast<Eigen::Index>(k))});
+  }
+  items.push_back({"specific", d.specific_variance});
+  std::ranges::sort(items, [](const Item& a, const Item& b) {
+    return a.variance > b.variance;
+  });
+
+  // Name the dominant factor and its share in the title, computed from the
+  // decomposition rather than written down once and left to rot.
+  std::ostringstream title;
+  if (d.model_variance > 0.0 && !items.empty()) {
+    title << items.front().label << " carries "
+          << pct1(items.front().variance / d.model_variance)
+          << " of the book's variance";
+  } else {
+    title << "Factor risk decomposition";
+  }
+  std::ostringstream sub;
+  sub << "Portfolio variance split across factors plus specific risk. "
+      << "A negative bar is a factor that hedges the rest of the book.";
+
+  Figure fig(title.str(), sub.str(), plot::kDefaultWidth, 540);
+  fig.set_margins(150.0, 250.0, 96.0, 78.0);
+
+  if (!(d.model_variance > 0.0)) return fig.str(source);
+
+  double lo = 0.0;
+  double hi = 0.0;
+  for (const auto& it : items) {
+    lo = std::min(lo, it.variance / d.model_variance);
+    hi = std::max(hi, it.variance / d.model_variance);
+  }
+  plot::pad_range(lo, hi, 0.10);
+
+  const Scale x{.domain_lo = lo,
+                .domain_hi = hi,
+                .range_lo = fig.plot_left(),
+                .range_hi = fig.plot_right()};
+  for (double t : plot::nice_ticks(lo, hi, 7)) {
+    fig.line(x(t), fig.plot_top(), x(t), fig.plot_bottom(), plot::kGrid, 1.0);
+    fig.text(x(t), fig.plot_bottom() + 17.0, pct1(t), plot::kTickSize,
+             plot::kMutedInk, "middle");
+  }
+  fig.text((fig.plot_left() + fig.plot_right()) / 2.0, fig.plot_bottom() + 40.0,
+           "share of model variance (%)", plot::kAxisLabelSize, plot::kInk,
+           "middle");
+
+  const double row = fig.plot_height() / static_cast<double>(items.size());
+  const double zero_x = x(0.0);
+  for (std::size_t k = 0; k < items.size(); ++k) {
+    const double share = items[k].variance / d.model_variance;
+    const double y = fig.plot_top() + row * static_cast<double>(k);
+    const bool specific = items[k].label == "specific";
+    const std::string color =
+        specific ? std::string(plot::kFaintInk) : plot::categorical_color(k);
+    fig.rect(zero_x, y + row * 0.2, x(share) - zero_x, row * 0.6, color);
+    fig.text(fig.plot_left() - 12.0, y + row * 0.5 + 3.5, items[k].label,
+             plot::kTickSize, plot::kInk, "end");
+    const bool neg = share < 0.0;
+    fig.text(x(share) + (neg ? -8.0 : 8.0), y + row * 0.5 + 3.5, pct1(share),
+             plot::kAnnotationSize, plot::kMutedInk, neg ? "end" : "start");
+  }
+
+  const double bx = fig.plot_right() + 18.0;
+  double by = fig.plot_top() + 14.0;
+  auto note = [&](const std::string& s) {
+    fig.text(bx, by, s, plot::kAnnotationSize, plot::kMutedInk);
+    by += 16.0;
+  };
+  note("factor vol " +
+       plot::percent(std::sqrt(std::max(0.0, d.factor_variance)), 3) +
+       " daily");
+  note("specific vol " +
+       plot::percent(std::sqrt(std::max(0.0, d.specific_variance)), 3));
+  note("model vol " + plot::percent(d.model_vol, 3));
+  note("sample vol " +
+       plot::percent(std::sqrt(std::max(0.0, d.sample_variance)), 3));
+  by += 8.0;
+  note("variance explained " + pct1(d.variance_explained));
+  if (d.sample_variance > 0.0) {
+    note("model error " + plot::percent(d.model_error / d.sample_variance, 1) +
+         " of sample variance");
+  }
+
+  return fig.str(source);
 }
 
 }  // namespace risk

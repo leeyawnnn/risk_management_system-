@@ -5,57 +5,86 @@
 #include <vector>
 
 #include "risk/attribution.hpp"
+#include "risk/backtest.hpp"
+#include "risk/decomposition.hpp"
 
 namespace risk {
 
-// Self-contained SVG figure generators (no external plotting dependency).
-// Each returns a complete <svg>...</svg> document as a string.
+// SVG figure generators. Every one routes through risk::plot (plot_style.hpp)
+// for palette, type scale, axes and the provenance footer, and every one takes
+// a `source` string that is stamped into the figure. A figure that cannot say
+// where its numbers came from does not get written.
 
-// Correlation heatmap: blue (negative) -> white (0) -> red (positive), with the
-// numeric value printed in each cell and asset labels on the axes.
+// Correlation heatmap with rows and columns reordered by hierarchical
+// clustering, so asset-class blocks emerge from the data instead of being
+// asserted in the caption. Upper triangle masked, diverging scale pinned at
+// zero, cell values annotated.
 std::string svg_correlation_heatmap(const Eigen::MatrixXd& correlation,
-                                    const std::vector<std::string>& names);
+                                    const std::vector<std::string>& names,
+                                    const std::string& source);
 
-// Horizontal bar chart of percentage risk contributions per asset. Bars to the
-// right (positive risk) are red; left (risk-reducing / hedge) are green.
-std::string svg_risk_contribution_bars(const RiskAttribution& attribution);
+// Average-linkage hierarchical clustering on correlation distance
+// d(i,j) = 1 - rho(i,j), returning the leaf order. Exposed for testing.
+std::vector<std::size_t> correlation_cluster_order(
+    const Eigen::MatrixXd& correlation);
 
-// Histogram of portfolio returns with vertical markers at the return levels
-// implied by VaR and CVaR (i.e. at -var and -cvar). confidence labels the
-// lines.
-std::string svg_return_histogram(const Eigen::VectorXd& portfolio_returns,
-                                 double var, double cvar, double confidence,
-                                 int bins = 40);
-
-// Horizontal bar chart of annualized volatility per instrument, coloured by
-// sector (a simple legend is drawn). Bars are sorted from most to least
-// volatile.
-std::string svg_asset_volatility(const std::vector<std::string>& names,
-                                 const std::vector<double>& annual_vol,
-                                 const std::vector<std::string>& sectors);
-
-// Per-asset comparison of capital weight (grey) vs. risk share (red). Where the
-// red bar exceeds the grey one, the position contributes more risk than weight.
+// Dumbbell chart of capital weight against risk share, sorted by the gap so
+// the positions punching above their weight rise to the top automatically.
 std::string svg_weight_vs_risk(const std::vector<std::string>& names,
                                const std::vector<double>& weights,
-                               const std::vector<double>& pct_risk);
+                               const std::vector<double>& pct_risk,
+                               const std::string& source);
 
-// Grouped bar chart of 95% and 99% 1-day VaR under each covariance estimator.
-std::string svg_estimator_var_comparison(
-    const std::vector<std::string>& methods, const std::vector<double>& var95,
-    const std::vector<double>& var99);
+// Risk contribution per position, with a reference line at 1/N and the
+// effective number of bets annotated on the chart.
+std::string svg_risk_contribution_bars(const RiskAttribution& attribution,
+                                       const std::string& source);
 
-// Time series of daily portfolio returns against the -VaR line, with breaches
-// (returns below -var_level) highlighted in red.
+// Distribution of daily portfolio returns with VaR and CVaR marked and the
+// fitted Gaussian density overlaid, so a reader can see for themselves
+// whether the empirical distribution departs from it.
+std::string svg_return_histogram(const Eigen::VectorXd& portfolio_returns,
+                                 double var, double cvar, double confidence,
+                                 const std::string& source, int bins = 60);
+
+// Annualized volatility per instrument, sorted, with bootstrap confidence
+// intervals. A volatility estimated on ~1,240 days has real uncertainty and
+// almost nobody draws it.
+std::string svg_asset_volatility(const std::vector<std::string>& names,
+                                 const std::vector<double>& annual_vol,
+                                 const std::vector<double>& ci_lower,
+                                 const std::vector<double>& ci_upper,
+                                 const std::vector<std::string>& sectors,
+                                 const std::string& source);
+
+// One row of the estimator ground-truth study.
+struct EstimatorErrorPoint {
+  std::string estimator;
+  int sample_size = 0;
+  double error = 0.0;     // mean |estimate - truth|
+  double error_se = 0.0;  // Monte Carlo standard error of that mean
+};
+
+// Estimator error against sample size on log-log axes, one line per
+// estimator, with Monte Carlo confidence bands.
+std::string svg_estimator_error(const std::vector<EstimatorErrorPoint>& points,
+                                const std::string& y_label,
+                                const std::string& title,
+                                const std::string& source);
+
+// Daily returns against the VaR line with exceptions marked, the Basel zone
+// as a background band over the trailing supervisory window, and the
+// Kupiec/Christoffersen results in an annotation box.
 std::string svg_var_backtest(const Eigen::VectorXd& portfolio_returns,
-                             double var_level, double confidence);
+                             double var_level, double confidence,
+                             const KupiecResult& kupiec,
+                             const ChristoffersenResult& christoffersen,
+                             const BaselResult& basel,
+                             const std::string& source);
 
-// Write the original three figures into `dir` as correlation.svg,
-// risk_contributions.svg, and return_distribution.svg. `dir` must exist.
-void write_figures(const Eigen::MatrixXd& correlation,
-                   const std::vector<std::string>& names,
-                   const RiskAttribution& attribution,
-                   const Eigen::VectorXd& portfolio_returns, double var,
-                   double cvar, double confidence, const std::string& dir);
+// Stacked decomposition of portfolio variance into each factor's
+// contribution plus specific risk.
+std::string svg_factor_decomposition(const FactorDecomposition& decomposition,
+                                     const std::string& source);
 
 }  // namespace risk

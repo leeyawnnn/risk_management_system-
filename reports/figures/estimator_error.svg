@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="750" viewBox="0 0 1200 750" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, 'Liberation Sans', sans-serif">
+<rect width="1200" height="750" fill="#ffffff"/>
+<text x="36" y="34" font-size="15.0" font-weight="600" fill="#1a1a1a">More history helps the sample estimator and does nothing for EWMA</text>
+<text x="36" y="53" font-size="11.0" fill="#5a5a5a">Mean error against a known covariance over Monte Carlo replications, log-log. Bands are +/- 2 standard errors.</text>
+<line x1="104.00" y1="569.07" x2="1010.00" y2="569.07" stroke="#e4e4e4" stroke-width="0.50"/>
+<text x="95.00" y="572.57" font-size="10.0" fill="#5a5a5a" text-anchor="end">2.0bp</text>
+<line x1="104.00" y1="476.08" x2="1010.00" y2="476.08" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="410.10" x2="1010.00" y2="410.10" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="358.92" x2="1010.00" y2="358.92" stroke="#e4e4e4" stroke-width="0.50"/>
+<text x="95.00" y="362.42" font-size="10.0" fill="#5a5a5a" text-anchor="end">5.0bp</text>
+<line x1="104.00" y1="317.11" x2="1010.00" y2="317.11" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="281.76" x2="1010.00" y2="281.76" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="251.13" x2="1010.00" y2="251.13" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="224.12" x2="1010.00" y2="224.12" stroke="#e4e4e4" stroke-width="0.50"/>
+<line x1="104.00" y1="199.95" x2="1010.00" y2="199.95" stroke="#e4e4e4" stroke-width="1.00"/>
+<text x="95.00" y="203.45" font-size="10.0" fill="#5a5a5a" text-anchor="end">10.0bp</text>
+<line x1="104.00" y1="92.00" x2="104.00" y2="668.00" stroke="#4a4a4a" stroke-width="1.00"/>
+<line x1="104.00" y1="668.00" x2="1010.00" y2="668.00" stroke="#4a4a4a" stroke-width="1.00"/>
+<line x1="141.69" y1="668.00" x2="141.69" y2="672.00" stroke="#4a4a4a" stroke-width="1.00"/>
+<text x="141.69" y="685.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">60</text>
+<line x1="341.94" y1="668.00" x2="341.94" y2="672.00" stroke="#4a4a4a" stroke-width="1.00"/>
+<text x="341.94" y="685.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">125</text>
+<line x1="531.04" y1="668.00" x2="531.04" y2="672.00" stroke="#4a4a4a" stroke-width="1.00"/>
+<text x="531.04" y="685.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">250</text>
+<line x1="720.15" y1="668.00" x2="720.15" y2="672.00" stroke="#4a4a4a" stroke-width="1.00"/>
+<text x="720.15" y="685.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">500</text>
+<line x1="972.31" y1="668.00" x2="972.31" y2="672.00" stroke="#4a4a4a" stroke-width="1.00"/>
+<text x="972.31" y="685.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">1260</text>
+<text x="557.00" y="708.00" font-size="12.0" fill="#1a1a1a" text-anchor="middle">sample size, trading days (log scale)</text>
+<text transform="translate(26,380.00) rotate(-90)" font-size="12.0" fill="#1a1a1a" text-anchor="middle">mean absolute 99% VaR error (log scale)</text>
+<polygon points="141.69,218.39 341.94,300.61 531.04,365.99 720.15,494.31 972.31,590.75 972.31,625.75 720.15,530.33 531.04,400.76 341.94,335.14 141.69,252.78 " fill="#0072b2" fill-opacity="0.16" stroke="none"/>
+<polyline points="141.69,234.94 341.94,317.22 531.04,382.72 720.15,511.61 972.31,607.59 " fill="none" stroke="#0072b2" stroke-width="2.20" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="141.69" cy="234.94" r="3.40" fill="#0072b2"/>
+<circle cx="341.94" cy="317.22" r="3.40" fill="#0072b2"/>
+<circle cx="531.04" cy="382.72" r="3.40" fill="#0072b2"/>
+<circle cx="720.15" cy="511.61" r="3.40" fill="#0072b2"/>
+<circle cx="972.31" cy="607.59" r="3.40" fill="#0072b2"/>
+<text x="984.31" y="611.09" font-size="9.0" fill="#0072b2" text-anchor="start">Sample</text>
+<polygon points="141.69,134.25 341.94,153.07 531.04,148.95 720.15,176.25 972.31,166.63 972.31,198.75 720.15,213.39 531.04,183.37 341.94,189.57 141.69,167.60 " fill="#d55e00" fill-opacity="0.16" stroke="none"/>
+<polyline points="141.69,150.32 341.94,170.60 531.04,165.51 720.15,194.07 972.31,182.13 " fill="none" stroke="#d55e00" stroke-width="2.20" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="141.69" cy="150.32" r="3.40" fill="#d55e00"/>
+<circle cx="341.94" cy="170.60" r="3.40" fill="#d55e00"/>
+<circle cx="531.04" cy="165.51" r="3.40" fill="#d55e00"/>
+<circle cx="720.15" cy="194.07" r="3.40" fill="#d55e00"/>
+<circle cx="972.31" cy="182.13" r="3.40" fill="#d55e00"/>
+<text x="984.31" y="185.63" font-size="9.0" fill="#d55e00" text-anchor="start">EWMA</text>
+<polygon points="141.69,218.17 341.94,300.12 531.04,368.15 720.15,496.46 972.31,589.83 972.31,624.59 720.15,532.69 531.04,403.28 341.94,334.69 141.69,251.25 " fill="#009e73" fill-opacity="0.16" stroke="none"/>
+<polyline points="141.69,234.11 341.94,316.75 531.04,385.04 720.15,513.86 972.31,606.55 " fill="none" stroke="#009e73" stroke-width="2.20" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="141.69" cy="234.11" r="3.40" fill="#009e73"/>
+<circle cx="341.94" cy="316.75" r="3.40" fill="#009e73"/>
+<circle cx="531.04" cy="385.04" r="3.40" fill="#009e73"/>
+<circle cx="720.15" cy="513.86" r="3.40" fill="#009e73"/>
+<circle cx="972.31" cy="606.55" r="3.40" fill="#009e73"/>
+<line x1="977.31" y1="606.55" x2="982.31" y2="619.59" stroke="#009e73" stroke-width="0.90"/>
+<text x="984.31" y="623.09" font-size="9.0" fill="#009e73" text-anchor="start">Ledoit-Wolf</text>
+<text x="36" y="736" font-size="8.0" font-style="italic" fill="#8a8a8a">Source: apps/estimator_study.cpp, simulated from a factor model fitted to the FRED sample. 400 replications per point.</text>
+</svg>

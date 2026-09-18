@@ -2,9 +2,10 @@
 
 namespace risk {
 
-// Bumped as phases land. Phase 0 = skeleton only.
-inline constexpr int kVersionMajor = 0;
+// Tracks the engine, not the data. Report artifacts additionally carry the
+// git commit and the data as-of date, which is what actually identifies a run.
+inline constexpr int kVersionMajor = 1;
 inline constexpr int kVersionMinor = 0;
-inline constexpr const char* kVersionString = "0.0-phase0-skeleton";
+inline constexpr const char* kVersionString = "1.0.0";
 
 }  // namespace risk

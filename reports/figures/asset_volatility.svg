@@ -1,51 +1,93 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="600" height="458" font-family="sans-serif">
-<rect width="600" height="458" fill="white"/>
-<text x="20" y="30" font-size="18" font-weight="bold">Annualized volatility by instrument</text>
-<rect x="70" y="64" width="460" height="18" fill="#9467bd"/>
-<text x="62" y="76" font-size="12" text-anchor="end">USO</text>
-<text x="536" y="76" font-size="11">31.4%</text>
-<rect x="70" y="90" width="446" height="18" fill="#1f77b4"/>
-<text x="62" y="102" font-size="12" text-anchor="end">XOM</text>
-<text x="522" y="102" font-size="11">30.4%</text>
-<rect x="70" y="116" width="376" height="18" fill="#1f77b4"/>
-<text x="62" y="128" font-size="12" text-anchor="end">JPM</text>
-<text x="452" y="128" font-size="11">25.7%</text>
-<rect x="70" y="142" width="371" height="18" fill="#1f77b4"/>
-<text x="62" y="154" font-size="12" text-anchor="end">AAPL</text>
-<text x="447" y="154" font-size="11">25.4%</text>
-<rect x="70" y="168" width="349" height="18" fill="#1f77b4"/>
-<text x="62" y="180" font-size="12" text-anchor="end">MSFT</text>
-<text x="425" y="180" font-size="11">23.8%</text>
-<rect x="70" y="194" width="280" height="18" fill="#1f77b4"/>
-<text x="62" y="206" font-size="12" text-anchor="end">QQQ</text>
-<text x="356" y="206" font-size="11">19.1%</text>
-<rect x="70" y="220" width="250" height="18" fill="#2ca02c"/>
-<text x="62" y="232" font-size="12" text-anchor="end">TLT</text>
-<text x="326" y="232" font-size="11">17.1%</text>
-<rect x="70" y="246" width="236" height="18" fill="#9467bd"/>
-<text x="62" y="258" font-size="12" text-anchor="end">GLD</text>
-<text x="312" y="258" font-size="11">16.1%</text>
-<rect x="70" y="272" width="232" height="18" fill="#1f77b4"/>
-<text x="62" y="284" font-size="12" text-anchor="end">SPY</text>
-<text x="308" y="284" font-size="11">15.9%</text>
-<rect x="70" y="298" width="230" height="18" fill="#1f77b4"/>
-<text x="62" y="310" font-size="12" text-anchor="end">EFA</text>
-<text x="306" y="310" font-size="11">15.7%</text>
-<rect x="70" y="324" width="142" height="18" fill="#ff7f0e"/>
-<text x="62" y="336" font-size="12" text-anchor="end">HYG</text>
-<text x="218" y="336" font-size="11">9.7%</text>
-<rect x="70" y="350" width="114" height="18" fill="#2ca02c"/>
-<text x="62" y="362" font-size="12" text-anchor="end">IEF</text>
-<text x="190" y="362" font-size="11">7.8%</text>
-<rect x="70" y="376" width="104" height="18" fill="#ff7f0e"/>
-<text x="62" y="388" font-size="12" text-anchor="end">LQD</text>
-<text x="180" y="388" font-size="11">7.1%</text>
-<rect x="70" y="410" width="12" height="12" fill="#1f77b4"/>
-<text x="86" y="420" font-size="11">Equity</text>
-<rect x="180" y="410" width="12" height="12" fill="#2ca02c"/>
-<text x="196" y="420" font-size="11">Rates</text>
-<rect x="290" y="410" width="12" height="12" fill="#ff7f0e"/>
-<text x="306" y="420" font-size="11">Credit</text>
-<rect x="400" y="410" width="12" height="12" fill="#9467bd"/>
-<text x="416" y="420" font-size="11">Commodity</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="574" viewBox="0 0 1200 574" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, 'Liberation Sans', sans-serif">
+<rect width="1200" height="574" fill="#ffffff"/>
+<text x="36" y="34" font-size="15.0" font-weight="600" fill="#1a1a1a">Instrument volatility spans a 19-fold range</text>
+<text x="36" y="53" font-size="11.0" fill="#5a5a5a">Annualized volatility of daily log returns with 95% bootstrap intervals. Sorted, coloured by asset class.</text>
+<line x1="150.00" y1="100.00" x2="150.00" y2="500.00" stroke="#e4e4e4" stroke-width="1.00"/>
+<text x="150.00" y="517.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">0.0%</text>
+<line x1="346.49" y1="100.00" x2="346.49" y2="500.00" stroke="#e4e4e4" stroke-width="1.00"/>
+<text x="346.49" y="517.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">10.0%</text>
+<line x1="542.98" y1="100.00" x2="542.98" y2="500.00" stroke="#e4e4e4" stroke-width="1.00"/>
+<text x="542.98" y="517.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">20.0%</text>
+<line x1="739.48" y1="100.00" x2="739.48" y2="500.00" stroke="#e4e4e4" stroke-width="1.00"/>
+<text x="739.48" y="517.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">30.0%</text>
+<line x1="935.97" y1="100.00" x2="935.97" y2="500.00" stroke="#e4e4e4" stroke-width="1.00"/>
+<text x="935.97" y="517.00" font-size="10.0" fill="#5a5a5a" text-anchor="middle">40.0%</text>
+<text x="610.00" y="540.00" font-size="12.0" fill="#1a1a1a" text-anchor="middle">annualized volatility (%)</text>
+<rect x="150.00" y="108.00" width="810.17" height="20.36" fill="#0072b2"/>
+<line x1="906.39" y1="118.18" x2="1017.92" y2="118.18" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="906.39" y1="114.18" x2="906.39" y2="122.18" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="1017.92" y1="114.18" x2="1017.92" y2="122.18" stroke="#1a1a1a" stroke-width="1.40"/>
+<text x="138.00" y="121.68" font-size="10.0" fill="#1a1a1a" text-anchor="end">COMD_WTI</text>
+<text x="1026.92" y="121.68" font-size="9.0" fill="#5a5a5a" text-anchor="start">41.2%</text>
+<rect x="150.00" y="144.36" width="456.28" height="20.36" fill="#d55e00"/>
+<line x1="577.50" y1="154.55" x2="641.31" y2="154.55" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="577.50" y1="150.55" x2="577.50" y2="158.55" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="641.31" y1="150.55" x2="641.31" y2="158.55" stroke="#1a1a1a" stroke-width="1.40"/>
+<text x="138.00" y="158.05" font-size="10.0" fill="#1a1a1a" text-anchor="end">EQ_US_TECH</text>
+<text x="650.31" y="158.05" font-size="9.0" fill="#5a5a5a" text-anchor="start">23.2%</text>
+<rect x="150.00" y="180.73" width="335.69" height="20.36" fill="#d55e00"/>
+<line x1="460.42" y1="190.91" x2="513.84" y2="190.91" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="460.42" y1="186.91" x2="460.42" y2="194.91" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="513.84" y1="186.91" x2="513.84" y2="194.91" stroke="#1a1a1a" stroke-width="1.40"/>
+<text x="138.00" y="194.41" font-size="10.0" fill="#1a1a1a" text-anchor="end">EQ_US_LARGE</text>
+<text x="522.84" y="194.41" font-size="9.0" fill="#5a5a5a" text-anchor="start">17.1%</text>
+<rect x="150.00" y="217.09" width="305.27" height="20.36" fill="#009e73"/>
+<line x1="441.15" y1="227.27" x2="469.70" y2="227.27" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="441.15" y1="223.27" x2="441.15" y2="231.27" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="469.70" y1="223.27" x2="469.70" y2="231.27" stroke="#1a1a1a" stroke-width="1.40"/>
+<text x="138.00" y="230.77" font-size="10.0" fill="#1a1a1a" text-anchor="end">UST_30Y</text>
+<text x="478.70" y="230.77" font-size="9.0" fill="#5a5a5a" text-anchor="start">15.5%</text>
+<rect x="150.00" y="253.45" width="294.25" height="20.36" fill="#d55e00"/>
+<line x1="422.55" y1="263.64" x2="468.67" y2="263.64" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="422.55" y1="259.64" x2="422.55" y2="267.64" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="468.67" y1="259.64" x2="468.67" y2="267.64" stroke="#1a1a1a" stroke-width="1.40"/>
+<text x="138.00" y="267.14" font-size="10.0" fill="#1a1a1a" text-anchor="end">EQ_US_BLUE</text>
+<text x="477.67" y="267.14" font-size="9.0" fill="#5a5a5a" text-anchor="start">15.0%</text>
+<rect x="150.00" y="289.82" width="232.83" height="20.36" fill="#cc79a7"/>
+<line x1="371.89" y1="300.00" x2="393.59" y2="300.00" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="371.89" y1="296.00" x2="371.89" y2="304.00" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="393.59" y1="296.00" x2="393.59" y2="304.00" stroke="#1a1a1a" stroke-width="1.40"/>
+<text x="138.00" y="303.50" font-size="10.0" fill="#1a1a1a" text-anchor="end">CREDIT_AAA</text>
+<text x="402.59" y="303.50" font-size="9.0" fill="#5a5a5a" text-anchor="start">11.8%</text>
+<rect x="150.00" y="326.18" width="206.88" height="20.36" fill="#cc79a7"/>
+<line x1="347.47" y1="336.36" x2="366.42" y2="336.36" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="347.47" y1="332.36" x2="347.47" y2="340.36" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="366.42" y1="332.36" x2="366.42" y2="340.36" stroke="#1a1a1a" stroke-width="1.40"/>
+<text x="138.00" y="339.86" font-size="10.0" fill="#1a1a1a" text-anchor="end">CREDIT_BAA</text>
+<text x="375.42" y="339.86" font-size="9.0" fill="#5a5a5a" text-anchor="start">10.5%</text>
+<rect x="150.00" y="362.55" width="161.47" height="20.36" fill="#009e73"/>
+<line x1="304.15" y1="372.73" x2="319.21" y2="372.73" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="304.15" y1="368.73" x2="304.15" y2="376.73" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="319.21" y1="368.73" x2="319.21" y2="376.73" stroke="#1a1a1a" stroke-width="1.40"/>
+<text x="138.00" y="376.23" font-size="10.0" fill="#1a1a1a" text-anchor="end">UST_10Y</text>
+<text x="328.21" y="376.23" font-size="9.0" fill="#5a5a5a" text-anchor="start">8.2%</text>
+<rect x="150.00" y="398.91" width="149.10" height="20.36" fill="#e69f00"/>
+<line x1="291.28" y1="409.09" x2="307.02" y2="409.09" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="291.28" y1="405.09" x2="291.28" y2="413.09" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="307.02" y1="405.09" x2="307.02" y2="413.09" stroke="#1a1a1a" stroke-width="1.40"/>
+<text x="138.00" y="412.59" font-size="10.0" fill="#1a1a1a" text-anchor="end">FX_EURUSD</text>
+<text x="316.02" y="412.59" font-size="9.0" fill="#5a5a5a" text-anchor="start">7.6%</text>
+<rect x="150.00" y="435.27" width="100.67" height="20.36" fill="#e69f00"/>
+<line x1="245.44" y1="445.45" x2="255.61" y2="445.45" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="245.44" y1="441.45" x2="245.44" y2="449.45" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="255.61" y1="441.45" x2="255.61" y2="449.45" stroke="#1a1a1a" stroke-width="1.40"/>
+<text x="138.00" y="448.95" font-size="10.0" fill="#1a1a1a" text-anchor="end">FX_USD_BROAD</text>
+<text x="264.61" y="448.95" font-size="9.0" fill="#5a5a5a" text-anchor="start">5.1%</text>
+<rect x="150.00" y="471.64" width="41.69" height="20.36" fill="#009e73"/>
+<line x1="188.67" y1="481.82" x2="194.91" y2="481.82" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="188.67" y1="477.82" x2="188.67" y2="485.82" stroke="#1a1a1a" stroke-width="1.40"/>
+<line x1="194.91" y1="477.82" x2="194.91" y2="485.82" stroke="#1a1a1a" stroke-width="1.40"/>
+<text x="138.00" y="485.32" font-size="10.0" fill="#1a1a1a" text-anchor="end">UST_2Y</text>
+<text x="203.91" y="485.32" font-size="9.0" fill="#5a5a5a" text-anchor="start">2.1%</text>
+<rect x="150.00" y="76.00" width="10.00" height="10.00" fill="#0072b2"/>
+<text x="165.00" y="85.00" font-size="9.0" fill="#5a5a5a" text-anchor="start">Commodity</text>
+<rect x="231.80" y="76.00" width="10.00" height="10.00" fill="#cc79a7"/>
+<text x="246.80" y="85.00" font-size="9.0" fill="#5a5a5a" text-anchor="start">Credit</text>
+<rect x="295.00" y="76.00" width="10.00" height="10.00" fill="#d55e00"/>
+<text x="310.00" y="85.00" font-size="9.0" fill="#5a5a5a" text-anchor="start">Equity</text>
+<rect x="358.20" y="76.00" width="10.00" height="10.00" fill="#e69f00"/>
+<text x="373.20" y="85.00" font-size="9.0" fill="#5a5a5a" text-anchor="start">FX</text>
+<rect x="396.60" y="76.00" width="10.00" height="10.00" fill="#009e73"/>
+<text x="411.60" y="85.00" font-size="9.0" fill="#5a5a5a" text-anchor="start">Rates</text>
+<text x="36" y="560" font-size="8.0" font-style="italic" fill="#8a8a8a">Source: FRED daily series, as of 2026-09-11. 1238 daily observations. Generated by compute_risk at commit 479b238a41.</text>
 </svg>
