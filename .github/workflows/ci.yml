@@ -1,0 +1,228 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Keep the FetchContent download cache in one predictable place so
+  # actions/cache can key on the pinned dependency versions.
+  FETCHCONTENT_BASE_DIR: ${{ github.workspace }}/.deps
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Build + test matrix. gcc is excluded on macOS: the runner's `gcc` is a
+  # clang shim, and a real Homebrew gcc adds several minutes for no new
+  # coverage that the Linux gcc leg does not already give us.
+  # ---------------------------------------------------------------------------
+  build-test:
+    name: ${{ matrix.os }} / ${{ matrix.compiler }} / ${{ matrix.build_type }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        compiler: [gcc, clang]
+        build_type: [Debug, Release]
+        exclude:
+          - os: macos-latest
+            compiler: gcc
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Cache pinned dependency downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.FETCHCONTENT_BASE_DIR }}
+          key: deps-${{ runner.os }}-eigen3.4.0-json3.12.0-catch2-3.8.1
+
+      - name: Select compiler
+        run: |
+          if [ "${{ matrix.compiler }}" = "gcc" ]; then
+            echo "CC=gcc"  >> "$GITHUB_ENV"
+            echo "CXX=g++" >> "$GITHUB_ENV"
+          else
+            echo "CC=clang"  >> "$GITHUB_ENV"
+            echo "CXX=clang++" >> "$GITHUB_ENV"
+          fi
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DRISK_WERROR=ON
+
+      - name: Build
+        run: cmake --build build -j
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --timeout 120
+
+  # ---------------------------------------------------------------------------
+  # Sanitizers. Debug + asserts on, so is_psd() assertion failures surface here
+  # rather than in a Release build where NDEBUG has removed them.
+  # ---------------------------------------------------------------------------
+  sanitizers:
+    name: sanitizer / ${{ matrix.sanitizer }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: ["address,undefined", "thread"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Cache pinned dependency downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.FETCHCONTENT_BASE_DIR }}
+          key: deps-${{ runner.os }}-eigen3.4.0-json3.12.0-catch2-3.8.1
+
+      - name: Configure
+        env:
+          CC: clang
+          CXX: clang++
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DRISK_SANITIZER="${{ matrix.sanitizer }}"
+
+      - name: Build
+        run: cmake --build build -j
+
+      - name: Test
+        env:
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+          ASAN_OPTIONS: detect_leaks=1
+        run: ctest --test-dir build --output-on-failure --timeout 300
+
+  # ---------------------------------------------------------------------------
+  # The offline path: system dependencies only, no network access at configure
+  # time. This is the leg that proves -DRISK_OFFLINE=ON actually works rather
+  # than merely existing as a documented flag.
+  # ---------------------------------------------------------------------------
+  offline-build:
+    name: offline build (system deps)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libeigen3-dev nlohmann-json3-dev catch2
+
+      - name: Configure offline
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRISK_OFFLINE=ON
+
+      - name: Build and test
+        run: |
+          cmake --build build -j
+          ctest --test-dir build --output-on-failure --timeout 120
+
+  # ---------------------------------------------------------------------------
+  # Formatting and static analysis.
+  # ---------------------------------------------------------------------------
+  clang-format:
+    name: clang-format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check formatting
+        run: |
+          clang-format --version
+          find src include apps tests -name '*.cpp' -o -name '*.hpp' \
+            | sort | xargs clang-format --dry-run --Werror
+
+  clang-tidy:
+    name: clang-tidy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Cache pinned dependency downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.FETCHCONTENT_BASE_DIR }}
+          key: deps-${{ runner.os }}-eigen3.4.0-json3.12.0-catch2-3.8.1
+
+      - name: Configure (for compile_commands.json)
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Run clang-tidy
+        run: |
+          clang-tidy --version
+          find src apps -name '*.cpp' | sort \
+            | xargs clang-tidy -p build --quiet
+
+  # ---------------------------------------------------------------------------
+  # Python tooling for the data-fetch and reference scripts.
+  # ---------------------------------------------------------------------------
+  python:
+    name: python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install tooling
+        run: python -m pip install --upgrade pip ruff numpy
+
+      - name: Lint
+        run: |
+          ruff check scripts
+          ruff format --check scripts
+
+      - name: Covariance reference implementation runs
+        run: python scripts/covariance_reference.py > /dev/null
+
+  # ---------------------------------------------------------------------------
+  # End-to-end: regenerate every figure and report from the committed data and
+  # fail if any of them does not render. This is what makes the numbers in the
+  # README checkable rather than asserted.
+  # ---------------------------------------------------------------------------
+  pipeline:
+    name: regenerate reports and figures
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Cache pinned dependency downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.FETCHCONTENT_BASE_DIR }}
+          key: deps-${{ runner.os }}-eigen3.4.0-json3.12.0-catch2-3.8.1
+
+      - name: Build
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j
+
+      - name: Run the full pipeline
+        run: ./scripts/build_reports.sh
+
+      - name: Fail if the committed worked example is stale
+        run: |
+          git --no-pager diff --stat -- reports/
+          git diff --quiet -- reports/ || {
+            echo "::error::reports/ is out of date. Run scripts/build_reports.sh and commit the result."
+            exit 1
+          }
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: reports
+          path: reports/

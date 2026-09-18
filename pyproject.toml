@@ -1,0 +1,13 @@
+# Tooling config only: this repository builds a C++ library. The Python here
+# fetches data and cross-checks the C++ estimators against reference
+# implementations, so it is linted but not packaged.
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.ruff.format]
+quote-style = "double"
