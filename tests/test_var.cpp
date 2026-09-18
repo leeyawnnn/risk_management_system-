@@ -9,6 +9,7 @@
 
 #include "risk/random.hpp"
 #include "risk/var.hpp"
+#include "test_support.hpp"
 
 using Catch::Matchers::WithinAbs;
 using Catch::Matchers::WithinRel;
@@ -19,9 +20,8 @@ namespace {
 Eigen::VectorXd gaussian_sample(int n, double mu, double sigma,
                                 std::uint64_t seed) {
   std::mt19937_64 gen(seed);
-  std::normal_distribution<double> nd(mu, sigma);
-  Eigen::VectorXd v(n);
-  for (int i = 0; i < n; ++i) v(i) = nd(gen);
+    Eigen::VectorXd v(n);
+  for (int i = 0; i < n; ++i) v(i) = risk_test::normal(gen, mu, sigma);
   return v;
 }
 
@@ -100,9 +100,8 @@ TEST_CASE("on heavy-tailed data parametric underestimates the 99% tail",
   // the divergence is historical-vs-Gaussian, which is the whole point.)
   const int n = 500'000;
   std::mt19937_64 gen(2024);
-  std::student_t_distribution<double> td(5.0);
-  Eigen::VectorXd r(n);
-  for (int i = 0; i < n; ++i) r(i) = 0.01 * td(gen);  // scale into return units
+    Eigen::VectorXd r(n);
+  for (int i = 0; i < n; ++i) r(i) = 0.01 * risk_test::student_t(gen, 5);  // scale into return units
 
   const double conf = 0.99;
   const double hist = historical_var(r, conf);

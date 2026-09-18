@@ -8,6 +8,7 @@
 
 #include "risk/cvar.hpp"
 #include "risk/var.hpp"
+#include "test_support.hpp"
 
 using Catch::Matchers::WithinAbs;
 using Catch::Matchers::WithinRel;
@@ -17,9 +18,8 @@ namespace {
 Eigen::VectorXd gaussian_sample(int n, double mu, double sigma,
                                 std::uint64_t seed) {
   std::mt19937_64 gen(seed);
-  std::normal_distribution<double> nd(mu, sigma);
-  Eigen::VectorXd v(n);
-  for (int i = 0; i < n; ++i) v(i) = nd(gen);
+    Eigen::VectorXd v(n);
+  for (int i = 0; i < n; ++i) v(i) = risk_test::normal(gen, mu, sigma);
   return v;
 }
 double sample_mean(const Eigen::VectorXd& v) {
@@ -113,9 +113,8 @@ TEST_CASE("heavy tails widen the CVaR/VaR gap", "[cvar][heavytail]") {
   // Student-t(5): the tail-mean/quantile ratio is larger than Gaussian's,
   // so empirical CVaR/VaR exceeds the parametric (Gaussian) ratio of ~1.15.
   std::mt19937_64 gen(2025);
-  std::student_t_distribution<double> td(5.0);
-  Eigen::VectorXd r(500'000);
-  for (Eigen::Index i = 0; i < r.size(); ++i) r(i) = 0.01 * td(gen);
+    Eigen::VectorXd r(500'000);
+  for (Eigen::Index i = 0; i < r.size(); ++i) r(i) = 0.01 * risk_test::student_t(gen, 5);
 
   const double conf = 0.99;
   const double ratio = historical_cvar(r, conf) / historical_var(r, conf);

@@ -6,6 +6,7 @@
 #include <random>
 
 #include "risk/covariance.hpp"
+#include "test_support.hpp"
 
 using Catch::Matchers::WithinAbs;
 using Catch::Matchers::WithinRel;
@@ -181,14 +182,13 @@ TEST_CASE("shrinkage improves conditioning on a near-singular sample",
   // Ledoit-Wolf must pull the smallest eigenvalue up and the condition
   // number down. This is the numerical statement of why shrinkage exists.
   std::mt19937_64 gen(12345);
-  std::normal_distribution<double> nd(0.0, 0.01);
-  const int T = 12;
+    const int T = 12;
   Eigen::MatrixXd X(T, 3);
   for (int t = 0; t < T; ++t) {
-    const double base = nd(gen);
+    const double base = risk_test::normal(gen, 0.0, 0.01);
     X(t, 0) = base;
-    X(t, 1) = base + 0.001 * nd(gen);  // almost a duplicate of column 0
-    X(t, 2) = nd(gen);
+    X(t, 1) = base + 0.001 * risk_test::normal(gen, 0.0, 0.01);  // almost a duplicate of column 0
+    X(t, 2) = risk_test::normal(gen, 0.0, 0.01);
   }
 
   const auto sample = risk::diagnose_matrix(risk::sample_covariance(X));

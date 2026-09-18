@@ -15,6 +15,7 @@
 #include "risk/figures.hpp"
 #include "risk/plot_style.hpp"
 #include "risk/portfolio.hpp"
+#include "test_support.hpp"
 
 using Catch::Matchers::WithinAbs;
 using namespace risk;
@@ -524,18 +525,16 @@ TEST_CASE("figure titles follow the data rather than being hardcoded",
   // regression guard for the class of bug this repository exists to fix: a
   // claim that stayed in the output after the data stopped supporting it.
   std::mt19937_64 gen(99);
-  std::normal_distribution<double> nd(0.0, 0.01);
-  Eigen::VectorXd gaussian(4000);
-  for (Eigen::Index i = 0; i < gaussian.size(); ++i) gaussian(i) = nd(gen);
+    Eigen::VectorXd gaussian(4000);
+  for (Eigen::Index i = 0; i < gaussian.size(); ++i) gaussian(i) = risk_test::normal(gen, 0.0, 0.01);
   const std::string normal_svg =
       svg_return_histogram(gaussian, 0.0165, 0.019, 0.95, kSource);
   CHECK(normal_svg.find("close to normal") != std::string::npos);
   CHECK(normal_svg.find("heavier than a normal") == std::string::npos);
 
   // A genuinely fat-tailed sample must be captioned as one.
-  std::student_t_distribution<double> td(3.0);
-  Eigen::VectorXd heavy(4000);
-  for (Eigen::Index i = 0; i < heavy.size(); ++i) heavy(i) = td(gen) * 0.005;
+    Eigen::VectorXd heavy(4000);
+  for (Eigen::Index i = 0; i < heavy.size(); ++i) heavy(i) = risk_test::student_t(gen, 3) * 0.005;
   const std::string heavy_svg =
       svg_return_histogram(heavy, 0.02, 0.03, 0.95, kSource);
   CHECK(heavy_svg.find("heavier than a normal") != std::string::npos);

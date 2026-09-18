@@ -111,10 +111,11 @@ if(RISK_BUILD_TESTS)
       tests/test_stress_test.cpp
       tests/test_var.cpp)
   target_link_libraries(risk_tests PRIVATE risk_core risk_flags Catch2::Catch2WithMain)
+  target_include_directories(risk_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
   target_compile_definitions(risk_tests PRIVATE
       RISK_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/data")
 
-  list(APPEND CMAKE_MODULE_PATH "${RISK_CATCH2_EXTRAS}")
+  list(APPEND CMAKE_MODULE_PATH ${RISK_CATCH2_EXTRAS})
   include(Catch)
   # An explicit per-test timeout: a hung test should fail CI, not stall it.
   catch_discover_tests(risk_tests PROPERTIES TIMEOUT 120)

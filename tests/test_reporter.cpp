@@ -12,6 +12,7 @@
 #include "risk/portfolio.hpp"
 #include "risk/reporter.hpp"
 #include "risk/stress_test.hpp"
+#include "test_support.hpp"
 
 using Catch::Matchers::WithinAbs;
 using namespace risk;
@@ -21,13 +22,12 @@ namespace {
 // A return sample long enough for the backtests to have something to chew on.
 Eigen::MatrixXd sample_returns(int T = 600) {
   std::mt19937_64 gen(4242);
-  std::normal_distribution<double> nd(0.0, 1.0);
-  Eigen::MatrixXd L(3, 3);
+    Eigen::MatrixXd L(3, 3);
   L << 0.010, 0.0, 0.0, 0.004, 0.006, 0.0, -0.002, 0.001, 0.015;
   Eigen::MatrixXd X(T, 3);
   for (int t = 0; t < T; ++t) {
     Eigen::VectorXd z(3);
-    for (int i = 0; i < 3; ++i) z(i) = nd(gen);
+    for (int i = 0; i < 3; ++i) z(i) = risk_test::normal(gen);
     X.row(t) = (L * z).transpose();
   }
   return X;
