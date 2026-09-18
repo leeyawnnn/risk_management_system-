@@ -99,6 +99,7 @@ if(RISK_BUILD_TESTS)
   add_executable(risk_tests
       tests/test_attribution.cpp
       tests/test_backtest.cpp
+      tests/test_config.cpp
       tests/test_covariance.cpp
       tests/test_covariance_reference.cpp
       tests/test_cvar.cpp
