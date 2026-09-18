@@ -1,0 +1,23 @@
+{
+  "scenarios": [
+    {
+      "name": "Direct asset shock",
+      "type": "historical",
+      "description": "A fixed per-asset shock, used to pin the arithmetic.",
+      "asset_shocks": { "AAA": -0.205, "BBB": 0.05 }
+    },
+    {
+      "name": "Pure factor shock",
+      "type": "hypothetical",
+      "description": "A single factor move, translated through the betas.",
+      "factor_shocks": { "usd": 0.10 }
+    },
+    {
+      "name": "Combined",
+      "type": "hypothetical",
+      "description": "Asset and factor shocks add.",
+      "asset_shocks": { "AAA": -0.01 },
+      "factor_shocks": { "equity": -0.20 }
+    }
+  ]
+}

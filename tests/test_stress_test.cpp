@@ -10,6 +10,9 @@ using Catch::Matchers::WithinRel;
 using namespace risk;
 
 namespace {
+std::string fixture(const std::string& name) {
+  return std::string(RISK_TEST_DATA_DIR) + "/" + name;
+}
 std::string cfg(const std::string& name) {
   return std::string(RISK_TEST_DATA_DIR) + "/../../config/" + name;
 }
@@ -84,38 +87,85 @@ TEST_CASE("assets absent from a scenario take zero shock", "[stress]") {
   CHECK_THAT(r.pct_pnl, WithinAbs(0.5 * -0.10, 1e-12));
 }
 
-TEST_CASE("scenarios load from JSON config", "[stress][json]") {
-  auto scenarios = load_scenarios(cfg("stress_scenarios.json"));
-  REQUIRE(scenarios.size() == 6);
+TEST_CASE("scenarios load from JSON", "[stress][json]") {
+  // Against a fixture, not the shipped config. Pinning exact shock sizes to
+  // config/stress_scenarios.json would make every re-measurement of the
+  // historical episodes look like a test failure.
+  auto scenarios = load_scenarios(fixture("fixture_scenarios.json"));
+  REQUIRE(scenarios.size() == 3);
 
-  // Find the 1987 single-day scenario and check its SPY shock.
   bool found = false;
   for (const auto& sc : scenarios) {
-    if (sc.name == "1987 Black Monday") {
+    if (sc.name == "Direct asset shock") {
       found = true;
       CHECK(sc.type == "historical");
-      CHECK_THAT(sc.asset_shocks.at("SPY"), WithinAbs(-0.205, 1e-12));
+      CHECK_THAT(sc.asset_shocks.at("AAA"), WithinAbs(-0.205, 1e-12));
+      CHECK(sc.factor_shocks.empty());
     }
   }
   CHECK(found);
 }
 
-TEST_CASE("factor betas load and drive the synthetic scenarios",
+TEST_CASE("factor betas load from the nested generated shape",
           "[stress][json]") {
-  auto scenarios = load_scenarios(cfg("stress_scenarios.json"));
-  auto betas = load_factor_betas(cfg("factor_betas.json"));
+  // The generated file puts loadings under "betas" beside "_meta" and
+  // "diagnostics". Reading the top level would invent two phantom assets.
+  auto betas = load_factor_betas(fixture("fixture_betas.json"));
+  CHECK(betas.size() == 3);
+  CHECK(betas.count("_meta") == 0);
+  CHECK(betas.count("diagnostics") == 0);
+  CHECK_THAT(betas.at("CCC").at("usd"), WithinAbs(-0.60, 1e-12));
+}
+
+TEST_CASE("factor shocks drive asset shocks through the betas",
+          "[stress][json]") {
+  auto scenarios = load_scenarios(fixture("fixture_scenarios.json"));
+  auto betas = load_factor_betas(fixture("fixture_betas.json"));
 
   Eigen::VectorXd w(3);
   w << 0.6, 0.3, 0.1;
-  Portfolio p({"SPY", "TLT", "GLD"}, w, 1'000'000.0);
+  Portfolio p({"AAA", "BBB", "CCC"}, w, 1'000'000.0);
 
-  // Find "USD +10%" and verify GLD's effective shock = beta(-0.60) * 0.10.
+  bool checked = false;
   for (const auto& sc : scenarios) {
-    if (sc.name == "USD +10%") {
+    if (sc.name == "Pure factor shock") {
       StressResult r = apply_scenario(p, sc, betas);
-      // GLD is index 2.
-      CHECK_THAT(r.asset_shock(2), WithinAbs(-0.60 * 0.10, 1e-12));
       CHECK_THAT(r.asset_shock(0), WithinAbs(-0.30 * 0.10, 1e-12));
+      CHECK_THAT(r.asset_shock(2), WithinAbs(-0.60 * 0.10, 1e-12));
+      checked = true;
+    }
+    if (sc.name == "Combined") {
+      // Asset and factor contributions add for the same asset.
+      StressResult r = apply_scenario(p, sc, betas);
+      CHECK_THAT(r.asset_shock(0), WithinAbs(-0.01 + 1.00 * -0.20, 1e-12));
+    }
+  }
+  CHECK(checked);
+}
+
+TEST_CASE("the shipped config loads and is internally consistent",
+          "[stress][json][config]") {
+  // Checks shape and provenance, not values: the historical shocks are
+  // measured from FRED and are expected to move when the data is refreshed.
+  auto scenarios = load_scenarios(cfg("stress_scenarios.json"));
+  auto betas = load_factor_betas(cfg("factor_betas.json"));
+  REQUIRE(!scenarios.empty());
+  REQUIRE(!betas.empty());
+
+  for (const auto& sc : scenarios) {
+    CHECK(!sc.name.empty());
+    CHECK(!sc.description.empty());
+    CHECK((sc.type == "historical" || sc.type == "hypothetical"));
+    CHECK((!sc.asset_shocks.empty() || !sc.factor_shocks.empty()));
+    // Every factor a scenario shocks must be one some instrument loads on,
+    // otherwise the scenario silently does nothing.
+    for (const auto& [factor, shock] : sc.factor_shocks) {
+      bool loaded = false;
+      for (const auto& [asset, loadings] : betas) {
+        if (loadings.count(factor) > 0) loaded = true;
+      }
+      INFO("scenario " << sc.name << " shocks unknown factor " << factor);
+      CHECK(loaded);
     }
   }
 }

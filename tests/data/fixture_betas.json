@@ -1,0 +1,9 @@
+{
+  "_meta": { "note": "Mirrors the generated file's shape: betas nested under a key, with sibling metadata that must not be read as assets." },
+  "betas": {
+    "AAA": { "equity": 1.00, "usd": -0.30 },
+    "BBB": { "equity": -0.20, "usd": 0.10 },
+    "CCC": { "equity": 0.10, "usd": -0.60 }
+  },
+  "diagnostics": { "AAA": { "r_squared": 0.9 } }
+}
