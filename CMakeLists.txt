@@ -59,6 +59,7 @@ endif()
 add_library(risk_core
     src/attribution.cpp
     src/backtest.cpp
+    src/config.cpp
     src/covariance.cpp
     src/cvar.cpp
     src/decomposition.cpp
@@ -82,7 +83,7 @@ target_link_libraries(risk_core
 # ---------------------------------------------------------------------------
 # Applications
 # ---------------------------------------------------------------------------
-foreach(app compute_risk)
+foreach(app compute_risk estimator_study tail_study)
   add_executable(${app} apps/${app}.cpp)
   target_link_libraries(${app} PRIVATE risk_core risk_flags)
 endforeach()

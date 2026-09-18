@@ -1,0 +1,87 @@
+{
+  "bootstrap": [
+    {
+      "ci_lower": 0.00731927274994125,
+      "ci_upper": 0.00913431226340631,
+      "confidence": 0.95,
+      "historical": 0.008416725571940871,
+      "measure": "VaR",
+      "parametric": 0.00800953989870539,
+      "parametric_inside_ci": true,
+      "standard_error": 0.0004892648355189436
+    },
+    {
+      "ci_lower": 0.010304625770671752,
+      "ci_upper": 0.012622867871133325,
+      "confidence": 0.95,
+      "historical": 0.011461705290212384,
+      "measure": "CVaR",
+      "parametric": 0.01007539403620795,
+      "parametric_inside_ci": false,
+      "standard_error": 0.0005921114562240858
+    },
+    {
+      "ci_lower": 0.010964064651705714,
+      "ci_upper": 0.015218687846594203,
+      "confidence": 0.99,
+      "historical": 0.012883080505489766,
+      "measure": "VaR",
+      "parametric": 0.011378779526660021,
+      "parametric_inside_ci": true,
+      "standard_error": 0.0010840416106554934
+    },
+    {
+      "ci_lower": 0.013942760071926824,
+      "ci_upper": 0.02025698078052115,
+      "confidence": 0.99,
+      "historical": 0.017174674535729347,
+      "measure": "CVaR",
+      "parametric": 0.013054100965435349,
+      "parametric_inside_ci": false,
+      "standard_error": 0.0016257682535094143
+    }
+  ],
+  "bootstrap_resamples": 10000,
+  "monte_carlo_var99": 0.011420404790549066,
+  "sample": {
+    "covariance_method": "ledoit_wolf",
+    "excess_kurtosis": 4.134676134606777,
+    "mean_daily": 0.00012245247801537853,
+    "model_vol_daily": 0.004943900322481815,
+    "observations": 1238,
+    "skewness": 0.01699182411547733,
+    "stdev_daily": 0.004952292777408903
+  },
+  "seed": 20260918,
+  "student_t": {
+    "comparison": [
+      {
+        "confidence": 0.95,
+        "cvar_understatement": 0.09984940182962143,
+        "gaussian_cvar": 0.010092705260472484,
+        "gaussian_var": 0.008023344258631236,
+        "short_sample_cvar": 0.010556942037083787,
+        "short_sample_var": 0.007280196794533821,
+        "student_t_cvar": 0.011100455843573335,
+        "student_t_var": 0.0073521758245177595,
+        "var_understatement": -0.08365195515466717
+      },
+      {
+        "confidence": 0.99,
+        "cvar_understatement": 0.38812358502936717,
+        "gaussian_cvar": 0.013076468655650637,
+        "gaussian_var": 0.011398303296337637,
+        "short_sample_cvar": 0.014467385720207322,
+        "short_sample_var": 0.012909713424830339,
+        "student_t_cvar": 0.01815175454980591,
+        "student_t_var": 0.013009284627904204,
+        "var_understatement": 0.1413351873242561
+      }
+    ],
+    "degrees_of_freedom": 4.0,
+    "reference_draws": 5000000,
+    "reference_excess_kurtosis": 36.32282954575586,
+    "scale": 0.003501799805326997,
+    "short_sample_size": 1238
+  }
+}
