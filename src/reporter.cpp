@@ -217,15 +217,15 @@ std::string to_json(const RiskReport& rep, int indent) {
   j["stress_tests"] = st;
 
   json as = json::array();
-  for (const auto& a : rep.asset_stats) {
-    as.push_back({{"asset", a.name},
-                  {"sector", a.sector},
-                  {"weight", a.weight},
-                  {"annual_vol", a.annual_vol},
-                  {"annual_return", a.annual_return},
-                  {"sharpe", a.sharpe},
-                  {"corr_to_portfolio", a.corr_to_portfolio},
-                  {"pct_risk", a.pct_risk}});
+  for (const auto& s : rep.asset_stats) {
+    as.push_back({{"asset", s.name},
+                  {"sector", s.sector},
+                  {"weight", s.weight},
+                  {"annual_vol", s.annual_vol},
+                  {"annual_return", s.annual_return},
+                  {"sharpe", s.sharpe},
+                  {"corr_to_portfolio", s.corr_to_portfolio},
+                  {"pct_risk", s.pct_risk}});
   }
   j["asset_stats"] = as;
 
