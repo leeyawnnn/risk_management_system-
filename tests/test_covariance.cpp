@@ -2,6 +2,8 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include <Eigen/Dense>
+#include <cmath>
+#include <random>
 
 #include "risk/covariance.hpp"
 
@@ -145,4 +147,54 @@ TEST_CASE("shrinkage strictly improves conditioning",
   const double cond_lw =
       es_lw.eigenvalues().maxCoeff() / es_lw.eigenvalues().minCoeff();
   CHECK(cond_lw <= cond_s);
+}
+
+TEST_CASE("matrix diagnostics report the spectrum and conditioning",
+          "[covariance][conditioning]") {
+  // A matrix with a known spectrum: diag(4, 1, 0.01) has condition number 400.
+  Eigen::MatrixXd d = Eigen::MatrixXd::Zero(3, 3);
+  d.diagonal() << 4.0, 1.0, 0.01;
+  const auto diag = risk::diagnose_matrix(d);
+  CHECK(diag.symmetric);
+  CHECK(diag.psd);
+  CHECK_THAT(diag.min_eigenvalue, WithinRel(0.01, 1e-12));
+  CHECK_THAT(diag.max_eigenvalue, WithinRel(4.0, 1e-12));
+  CHECK_THAT(diag.condition_number, WithinRel(400.0, 1e-12));
+  CHECK_FALSE(diag.ill_conditioned);
+}
+
+TEST_CASE("a singular matrix reports infinite condition number",
+          "[covariance][conditioning]") {
+  // Two identical assets: the covariance is rank 1 and cannot be inverted.
+  Eigen::MatrixXd s(2, 2);
+  s << 1e-4, 1e-4, 1e-4, 1e-4;
+  const auto diag = risk::diagnose_matrix(s);
+  CHECK(diag.psd);
+  CHECK(std::isinf(diag.condition_number));
+  CHECK(diag.ill_conditioned);
+}
+
+TEST_CASE("shrinkage improves conditioning on a near-singular sample",
+          "[covariance][conditioning]") {
+  // Two near-duplicate assets plus a third, with barely more observations
+  // than assets: exactly the regime the sample estimator handles worst.
+  // Ledoit-Wolf must pull the smallest eigenvalue up and the condition
+  // number down. This is the numerical statement of why shrinkage exists.
+  std::mt19937_64 gen(12345);
+  std::normal_distribution<double> nd(0.0, 0.01);
+  const int T = 12;
+  Eigen::MatrixXd X(T, 3);
+  for (int t = 0; t < T; ++t) {
+    const double base = nd(gen);
+    X(t, 0) = base;
+    X(t, 1) = base + 0.001 * nd(gen);  // almost a duplicate of column 0
+    X(t, 2) = nd(gen);
+  }
+
+  const auto sample = risk::diagnose_matrix(risk::sample_covariance(X));
+  const auto shrunk =
+      risk::diagnose_matrix(risk::ledoit_wolf_covariance(X).cov);
+
+  CHECK(shrunk.condition_number < sample.condition_number);
+  CHECK(shrunk.min_eigenvalue > sample.min_eigenvalue);
 }

@@ -1,7 +1,9 @@
 #include "risk/covariance.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 
 namespace risk {
@@ -17,6 +19,34 @@ bool is_psd(const Eigen::MatrixXd& M, double tol) {
   Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> es(M);
   if (es.info() != Eigen::Success) return false;
   return es.eigenvalues().minCoeff() >= -tol;
+}
+
+MatrixDiagnostics diagnose_matrix(const Eigen::MatrixXd& M,
+                                  double condition_threshold) {
+  MatrixDiagnostics d;
+  if (M.rows() != M.cols() || M.rows() == 0) {
+    throw std::invalid_argument(
+        "diagnose_matrix: need a non-empty square matrix");
+  }
+  d.symmetric = is_symmetric(M);
+
+  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> es(M);
+  if (es.info() != Eigen::Success) {
+    throw std::runtime_error("diagnose_matrix: eigen decomposition failed");
+  }
+  const Eigen::VectorXd ev = es.eigenvalues();  // ascending
+  d.min_eigenvalue = ev.minCoeff();
+  d.max_eigenvalue = ev.maxCoeff();
+  d.psd = d.symmetric && d.min_eigenvalue >= -1e-10;
+
+  // A non-positive smallest eigenvalue means the matrix is singular to
+  // working precision. Reporting infinity is more useful than a huge finite
+  // number that invites someone to keep going.
+  d.condition_number = (d.min_eigenvalue > 0.0)
+                           ? d.max_eigenvalue / d.min_eigenvalue
+                           : std::numeric_limits<double>::infinity();
+  d.ill_conditioned = !(d.condition_number < condition_threshold);
+  return d;
 }
 
 Eigen::MatrixXd to_return_matrix(const std::vector<ReturnSeries>& series) {

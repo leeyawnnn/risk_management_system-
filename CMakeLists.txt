@@ -98,6 +98,7 @@ if(RISK_BUILD_TESTS)
       tests/test_attribution.cpp
       tests/test_backtest.cpp
       tests/test_covariance.cpp
+      tests/test_covariance_reference.cpp
       tests/test_cvar.cpp
       tests/test_decomposition.cpp
       tests/test_portfolio.cpp
