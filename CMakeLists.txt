@@ -58,6 +58,7 @@ endif()
 # until someone re-runs CMake, which is exactly the failure you notice last.
 add_library(risk_core
     src/attribution.cpp
+    src/backtest.cpp
     src/covariance.cpp
     src/cvar.cpp
     src/figures.cpp
@@ -94,6 +95,7 @@ if(RISK_BUILD_TESTS)
 
   add_executable(risk_tests
       tests/test_attribution.cpp
+      tests/test_backtest.cpp
       tests/test_covariance.cpp
       tests/test_cvar.cpp
       tests/test_portfolio.cpp

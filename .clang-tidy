@@ -1,6 +1,13 @@
 # Checks are scoped to what actually matters for a numerical library: real
 # bugs, lifetime and narrowing issues, and modern-C++ hygiene. Style-only
 # checks are left to clang-format so the two tools never disagree.
+#
+# readability-simplify-boolean-expr is off deliberately, not for convenience.
+# Input validation here is written `if (!(x > 0.0 && x < 1.0))`, and the
+# DeMorgan rewrite the check proposes, `if (x <= 0.0 || x >= 1.0)`, is not
+# equivalent: every comparison against NaN is false, so the rewritten guard
+# waves NaN straight through into the estimator. The verbose form is the
+# correct one.
 Checks: >
   -*,
   bugprone-*,
@@ -18,7 +25,14 @@ Checks: >
   -readability-magic-numbers,
   -readability-function-cognitive-complexity,
   -readability-avoid-nested-conditional-operator,
-  -cert-err58-cpp
+  -readability-braces-around-statements,
+  -readability-math-missing-parentheses,
+  -readability-simplify-boolean-expr,
+  -cert-err58-cpp,
+  # Fixed seeds are required here, not a mistake: every Monte Carlo result in
+  # this repository has to be reproducible run to run.
+  -cert-msc32-c,
+  -cert-msc51-cpp
 
 WarningsAsErrors: '*'
 HeaderFilterRegex: '.*/(include/risk|src)/.*'
