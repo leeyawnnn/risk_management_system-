@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Data as-of | 2026-09-11 |
-| Code commit | 479b238a41 |
+| Code commit | 61d3296175 |
 | Seed | 42 |
 | Notional | $25,000,000 |
 | Covariance estimator | ledoit_wolf |
@@ -20,16 +20,16 @@
 |---|---:|---:|---:|---:|---:|---:|
 | Historical | 95% | 1d | 0.84% | $210,418 | 1.15% | $286,543 |
 | Parametric | 95% | 1d | 0.80% | $200,238 | 1.01% | $251,885 |
-| MonteCarlo | 95% | 1d | 0.80% | $200,344 | 1.01% | $252,746 |
+| MonteCarlo | 95% | 1d | 0.80% | $200,618 | 1.01% | $251,488 |
 | Historical | 95% | 10d | 2.66% | $665,401 | 3.62% | $906,127 |
 | Parametric | 95% | 10d | 2.45% | $612,277 | 3.10% | $775,597 |
-| MonteCarlo | 95% | 10d | 2.46% | $613,760 | 3.12% | $778,792 |
+| MonteCarlo | 95% | 10d | 2.45% | $611,521 | 3.10% | $775,561 |
 | Historical | 99% | 1d | 1.29% | $322,077 | 1.72% | $429,367 |
 | Parametric | 99% | 1d | 1.14% | $284,469 | 1.31% | $326,353 |
-| MonteCarlo | 99% | 1d | 1.14% | $285,510 | 1.32% | $329,133 |
+| MonteCarlo | 99% | 1d | 1.13% | $282,922 | 1.29% | $323,281 |
 | Historical | 99% | 10d | 4.07% | $1,018,497 | 5.43% | $1,357,777 |
 | Parametric | 99% | 10d | 3.51% | $878,639 | 4.04% | $1,011,085 |
-| MonteCarlo | 99% | 10d | 3.53% | $881,488 | 4.06% | $1,015,746 |
+| MonteCarlo | 99% | 10d | 3.51% | $878,727 | 4.05% | $1,012,624 |
 
 ## Backtests
 
@@ -38,24 +38,24 @@ Kupiec tests whether exceptions arrived at the advertised rate. Christoffersen t
 | Method | Conf | VaR | Exc. | Exp. | Kupiec p | Christ. p | Cond. cov. p | Basel | AS Z2 | Z2 p |
 |---|---:|---:|---:|---:|---|---|---|---|---:|---:|
 | Historical | 95% | 0.84% | 61 | 61.9 | 0.906 pass | 0.000 REJECT | 0.001 REJECT | green (4/250) | 0.015 | 0.021 |
-| Parametric | 95% | 0.80% | 66 | 61.9 | 0.597 pass | 0.001 REJECT | 0.002 REJECT | green (5/250) | -0.187 | 0.076 |
-| MonteCarlo | 95% | 0.80% | 66 | 61.9 | 0.597 pass | 0.001 REJECT | 0.002 REJECT | green (5/250) | -0.183 | 0.076 |
+| Parametric | 95% | 0.80% | 66 | 61.9 | 0.597 pass | 0.001 REJECT | 0.002 REJECT | green (5/250) | -0.187 | 0.069 |
+| MonteCarlo | 95% | 0.80% | 66 | 61.9 | 0.597 pass | 0.001 REJECT | 0.002 REJECT | green (5/250) | -0.189 | 0.065 |
 | Historical | 99% | 1.29% | 12 | 12.4 | 0.913 pass | 0.004 REJECT | 0.016 REJECT | green (1/250) | 0.031 | 0.000 |
 | Parametric | 99% | 1.14% | 19 | 12.4 | 0.080 pass | 0.032 REJECT | 0.021 REJECT | green (1/250) | -0.797 | 0.005 |
-| MonteCarlo | 99% | 1.14% | 19 | 12.4 | 0.080 pass | 0.032 REJECT | 0.021 REJECT | green (1/250) | -0.782 | 0.004 |
+| MonteCarlo | 99% | 1.13% | 19 | 12.4 | 0.080 pass | 0.032 REJECT | 0.021 REJECT | green (1/250) | -0.814 | 0.006 |
 
 ## Instruments
 
 | Asset | Class | Weight | Ann. vol | 95% CI | Ann. return | Sharpe | Skew | Ex. kurt | Corr to book | % of risk |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | EQ_US_LARGE | Equity | 18.0% | 17.08% | [15.8%, 18.5%] | 11.13% | 0.65 | 0.03 | 6.26 | 0.86 | 33.7% |
-| EQ_US_TECH | Equity | 10.0% | 23.22% | [21.8%, 25.0%] | 13.23% | 0.57 | 0.04 | 4.06 | 0.83 | 24.4% |
+| EQ_US_TECH | Equity | 10.0% | 23.22% | [21.7%, 25.0%] | 13.23% | 0.57 | 0.04 | 4.06 | 0.83 | 24.4% |
 | EQ_US_BLUE | Equity | 7.0% | 14.97% | [13.9%, 16.2%] | 8.52% | 0.57 | 0.06 | 5.32 | 0.78 | 10.4% |
 | UST_2Y | Rates | 15.0% | 2.12% | [2.0%, 2.3%] | 1.96% | 0.92 | 0.62 | 5.80 | 0.32 | 1.3% |
 | UST_10Y | Rates | 12.0% | 8.22% | [7.8%, 8.6%] | -2.61% | -0.32 | 0.10 | 0.93 | 0.49 | 6.1% |
-| UST_30Y | Rates | 5.0% | 15.54% | [14.8%, 16.3%] | -9.20% | -0.59 | 0.00 | 0.74 | 0.48 | 4.8% |
+| UST_30Y | Rates | 5.0% | 15.54% | [14.9%, 16.3%] | -9.20% | -0.59 | 0.00 | 0.74 | 0.48 | 4.8% |
 | CREDIT_AAA | Credit | 8.0% | 11.85% | [11.3%, 12.4%] | -5.22% | -0.44 | -0.03 | 0.96 | 0.56 | 6.8% |
-| CREDIT_BAA | Credit | 10.0% | 10.53% | [10.0%, 11.0%] | -3.15% | -0.30 | 0.01 | 0.80 | 0.56 | 7.5% |
+| CREDIT_BAA | Credit | 10.0% | 10.53% | [10.1%, 11.0%] | -3.15% | -0.30 | 0.01 | 0.80 | 0.56 | 7.5% |
 | COMD_WTI | Commodity | 5.0% | 41.23% | [38.5%, 44.2%] | 6.92% | 0.17 | -0.62 | 4.04 | 0.18 | 4.9% |
 | FX_USD_BROAD | FX | 5.0% | 5.12% | [4.9%, 5.4%] | 0.81% | 0.16 | -0.19 | 1.31 | -0.37 | -1.2% |
 | FX_EURUSD | FX | 5.0% | 7.59% | [7.2%, 8.0%] | -0.23% | -0.03 | 0.21 | 1.47 | 0.28 | 1.4% |
@@ -180,9 +180,11 @@ Factor model volatility 0.497% daily against a sample volatility of 0.494%. The 
 
 ## Reverse stress
 
-The most likely factor move reaching each loss, found by minimising Mahalanobis distance subject to the loss constraint. The distance column is the answer: how many standard deviations of the book's own factor distribution the scenario sits at.
+The most likely factor move reaching each loss, found by minimising Mahalanobis distance subject to the loss constraint. The distance column is the answer: how many standard deviations of the book's own one-day factor distribution the scenario sits at.
 
-| Target loss | Target ($) | Distance (sigma) | Gaussian prob. | Implied factor move |
+These are single-session moves. The Gaussian probability is what a normal factor distribution would assign to a move that large, and for the deeper rows it is not a forecast: the book's measured excess kurtosis of 4.13 means the real tail is far heavier than the normal it is computed under. Read the distance, not the probability.
+
+| Target loss | Target ($) | Distance (daily sigma) | Gaussian prob. | Implied factor move |
 |---:|---:|---:|---:|---|
 | 5.0% | $1,250,000 | 10.14 | 0.00000000 | equity -9.46%, rates_level +27bp, rates_slope +5bp, credit_spread +1bp, usd +1.23%, oil -4.79% |
 | 10.0% | $2,500,000 | 20.28 | 0.00000000 | equity -18.92%, rates_level +54bp, rates_slope +10bp, credit_spread +1bp, usd +2.46%, oil -9.59% |
