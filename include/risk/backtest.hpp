@@ -95,8 +95,19 @@ struct BaselResult {
   long exceptions = 0;
   double cumulative_probability = 0.0;
   BaselZone zone = BaselZone::Green;
-  double capital_multiplier = 3.0;  // the supervisory plus-factor scale
-  bool window_complete = true;      // false if fewer than `window` observations
+  // Scaling factor applied to the capital charge: 3.0 plus the supervisory
+  // increment. The yellow zone is graduated by exception count rather than
+  // flat -- 5 exceptions costs 0.40 and 9 costs 0.65 -- and reporting one
+  // number for the whole zone understates a model at the top of it.
+  // Defined only at the 250-day, 99% regulatory window; see
+  // `plus_factor_applicable`.
+  double capital_multiplier = 3.0;
+  double plus_factor = 0.0;
+  // False when the window or confidence is not the supervisory 250 days at
+  // 99%, in which case the published increments do not apply and inventing
+  // an interpolation would be worse than saying so.
+  bool plus_factor_applicable = false;
+  bool window_complete = true;  // false if fewer than `window` observations
 };
 
 BaselResult basel_traffic_light(const Eigen::VectorXd& returns,

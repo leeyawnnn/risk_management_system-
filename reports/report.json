@@ -188,8 +188,11 @@
         "z2": 0.014539579967690508
       },
       "basel": {
+        "capital_multiplier": 3.0,
         "cumulative_probability": 0.004570736469000179,
         "exceptions": 4,
+        "plus_factor": 0.0,
+        "plus_factor_applicable": false,
         "window": 250,
         "window_complete": true,
         "zone": "green"
@@ -230,8 +233,11 @@
         "z2": -0.18683344086874087
       },
       "basel": {
+        "capital_multiplier": 3.0,
         "cumulative_probability": 0.013085550524016887,
         "exceptions": 5,
+        "plus_factor": 0.0,
+        "plus_factor_applicable": false,
         "window": 250,
         "window_complete": true,
         "zone": "green"
@@ -272,8 +278,11 @@
         "z2": -0.18870806393316286
       },
       "basel": {
+        "capital_multiplier": 3.0,
         "cumulative_probability": 0.013085550524016887,
         "exceptions": 5,
+        "plus_factor": 0.0,
+        "plus_factor_applicable": false,
         "window": 250,
         "window_complete": true,
         "zone": "green"
@@ -314,8 +323,11 @@
         "z2": 0.030694668820679394
       },
       "basel": {
+        "capital_multiplier": 3.0,
         "cumulative_probability": 0.2857517387939456,
         "exceptions": 1,
+        "plus_factor": 0.0,
+        "plus_factor_applicable": true,
         "window": 250,
         "window_complete": true,
         "zone": "green"
@@ -356,8 +368,11 @@
         "z2": -0.7971758323526588
       },
       "basel": {
+        "capital_multiplier": 3.0,
         "cumulative_probability": 0.2857517387939456,
         "exceptions": 1,
+        "plus_factor": 0.0,
+        "plus_factor_applicable": true,
         "window": 250,
         "window_complete": true,
         "zone": "green"
@@ -398,8 +413,11 @@
         "z2": -0.8142517068570823
       },
       "basel": {
+        "capital_multiplier": 3.0,
         "cumulative_probability": 0.2857517387939456,
         "exceptions": 1,
+        "plus_factor": 0.0,
+        "plus_factor_applicable": true,
         "window": 250,
         "window_complete": true,
         "zone": "green"
@@ -894,7 +912,7 @@
     "annualization_factor": 252.0,
     "as_of": "2026-09-11",
     "covariance_method": "ledoit_wolf",
-    "git_commit": "61d3296175",
+    "git_commit": "f15b832cf4",
     "portfolio_name": "Multi-Asset Book",
     "seed": 42
   },

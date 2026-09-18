@@ -184,6 +184,42 @@ TEST_CASE("Basel zones reproduce the published 250-day boundaries") {
   for (int k = 10; k <= 14; ++k) CHECK(zone_for(k) == BaselZone::Red);
 }
 
+TEST_CASE("Basel plus factors follow the published supervisory table") {
+  // The increments are graduated inside the yellow zone: reporting one flat
+  // number for the whole zone understates a model sitting at the top of it.
+  auto result_for = [](int exceptions) {
+    std::vector<int> at;
+    for (int i = 0; i < exceptions; ++i) at.push_back(i * 2);
+    return basel_traffic_light(series_with_exceptions(250, at), kVar, 0.99);
+  };
+  const std::vector<std::pair<int, double>> table = {
+      {0, 0.00}, {4, 0.00}, {5, 0.40},  {6, 0.50}, {7, 0.65},
+      {8, 0.75}, {9, 0.85}, {10, 1.00}, {14, 1.00}};
+  for (const auto& [exceptions, expected] : table) {
+    const auto r = result_for(exceptions);
+    INFO("exceptions = " << exceptions);
+    CHECK(r.plus_factor_applicable);
+    CHECK(r.plus_factor == Approx(expected));
+    CHECK(r.capital_multiplier == Approx(3.0 + expected));
+  }
+}
+
+TEST_CASE("Basel declines to apply a plus factor outside the 250d/99% window") {
+  // The published increments are defined for that window and that confidence
+  // only. Interpolating them elsewhere would be inventing a rule.
+  std::vector<int> at;
+  for (int i = 0; i < 6; ++i) at.push_back(i * 3);
+  const auto at_95 =
+      basel_traffic_light(series_with_exceptions(250, at), kVar, 0.95);
+  CHECK_FALSE(at_95.plus_factor_applicable);
+  CHECK(at_95.plus_factor == Approx(0.0));
+  CHECK(at_95.capital_multiplier == Approx(3.0));
+
+  const auto short_window =
+      basel_traffic_light(series_with_exceptions(500, at), kVar, 0.99, 500);
+  CHECK_FALSE(short_window.plus_factor_applicable);
+}
+
 TEST_CASE("Basel looks at the most recent window only") {
   // 12 exceptions, all in the first 250 days of a 600-day sample. The trailing
   // 250-day window is clean, so the zone must be green.

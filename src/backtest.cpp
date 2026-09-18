@@ -242,18 +242,52 @@ BaselResult basel_traffic_light(const Eigen::VectorXd& returns,
 
   if (r.cumulative_probability < 0.95) {
     r.zone = BaselZone::Green;
-    r.capital_multiplier = 3.0;
   } else if (r.cumulative_probability < 0.9999) {
     r.zone = BaselZone::Yellow;
-    // The published yellow-zone plus factors run 0.40 to 0.85 in steps tied to
-    // the exception count at the 250-day window; interpolating them for an
-    // arbitrary window would be inventing a rule, so this reports the scale
-    // endpoints only through the zone itself.
-    r.capital_multiplier = 3.40;
   } else {
     r.zone = BaselZone::Red;
-    r.capital_multiplier = 4.0;
   }
+
+  // The supervisory plus factors are published as a table indexed by the
+  // exception count over 250 days at 99%, and they are graduated inside the
+  // yellow zone rather than flat. They are only defined for that window and
+  // that confidence, so outside it the multiplier stays at the 3.0 base and
+  // `plus_factor_applicable` says the increment does not apply -- inventing
+  // an interpolation for an arbitrary window would be worse than declining.
+  const bool supervisory = (window == 250) &&
+                           (std::abs(confidence - 0.99) < 1e-12) &&
+                           r.window_complete;
+  r.plus_factor_applicable = supervisory;
+  if (supervisory) {
+    switch (exceptions) {
+      case 0:
+      case 1:
+      case 2:
+      case 3:
+      case 4:
+        r.plus_factor = 0.00;
+        break;
+      case 5:
+        r.plus_factor = 0.40;
+        break;
+      case 6:
+        r.plus_factor = 0.50;
+        break;
+      case 7:
+        r.plus_factor = 0.65;
+        break;
+      case 8:
+        r.plus_factor = 0.75;
+        break;
+      case 9:
+        r.plus_factor = 0.85;
+        break;
+      default:
+        r.plus_factor = 1.00;
+        break;  // 10 or more: red zone
+    }
+  }
+  r.capital_multiplier = 3.0 + r.plus_factor;
   return r;
 }
 

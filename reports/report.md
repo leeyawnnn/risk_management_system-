@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Data as-of | 2026-09-11 |
-| Code commit | 61d3296175 |
+| Code commit | f15b832cf4 |
 | Seed | 42 |
 | Notional | $25,000,000 |
 | Covariance estimator | ledoit_wolf |
