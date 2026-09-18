@@ -232,9 +232,7 @@ def main() -> int:
         "_meta": {
             "generated_by": "scripts/build_stress_scenarios.py",
             "git_commit": git_sha(),
-            "generated_utc": dt.datetime.now(dt.timezone.utc).isoformat(
-                timespec="seconds"
-            ),
+            "generated_utc": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
             "source": "FRED long-history daily series",
             "series_used": SERIES,
             "equity_proxy_note": (
@@ -246,8 +244,10 @@ def main() -> int:
     }
     OUT.write_text(json.dumps(out, indent=2) + "\n")
 
-    print(f"\n{'scenario':26s} {'equity':>8s} {'rates':>8s} {'credit':>8s} "
-          f"{'usd':>8s} {'oil':>9s}")
+    print(
+        f"\n{'scenario':26s} {'equity':>8s} {'rates':>8s} {'credit':>8s} "
+        f"{'usd':>8s} {'oil':>9s}"
+    )
     for s in scenarios:
         f = s["factor_shocks"]
         print(

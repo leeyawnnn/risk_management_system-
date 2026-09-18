@@ -143,9 +143,7 @@ def main() -> int:
         "_meta": {
             "generated_by": "scripts/estimate_factor_betas.py",
             "git_commit": git_sha(),
-            "generated_utc": dt.datetime.now(dt.timezone.utc).isoformat(
-                timespec="seconds"
-            ),
+            "generated_utc": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
             "estimator": "OLS with HC1 robust standard errors",
             "sample_start": manifest["sample_start"],
             "sample_end": manifest["sample_end"],

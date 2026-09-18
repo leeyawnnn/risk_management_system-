@@ -32,6 +32,7 @@ import csv
 import datetime as dt
 import hashlib
 import io
+import itertools
 import json
 import pathlib
 import subprocess
@@ -205,7 +206,7 @@ def par_bond_total_return(y_prev: float, y_now: float, maturity_years: float) ->
     """
     if maturity_years <= 0:
         raise ValueError("maturity_years must be positive")
-    n = int(round(maturity_years * 2))  # semiannual coupon count
+    n = round(maturity_years * 2)  # semiannual coupon count
     coupon = 100.0 * y_prev / 2.0  # semiannual coupon in points of face
     rate = y_now / 2.0  # per-period discount rate
 
@@ -248,22 +249,19 @@ def build_factors(
 
     def logret(code: str) -> list[float]:
         obs = raw[code]
-        return [
-            math.log(obs[b] / obs[a]) for a, b in zip(dates[:-1], dates[1:], strict=True)
-        ]
+        return [math.log(obs[b] / obs[a]) for a, b in itertools.pairwise(dates)]
 
     def dyield(code: str) -> list[float]:
         obs = raw[code]
-        return [
-            (obs[b] - obs[a]) / 100.0
-            for a, b in zip(dates[:-1], dates[1:], strict=True)
-        ]
+        return [(obs[b] - obs[a]) / 100.0 for a, b in itertools.pairwise(dates)]
 
     d2, d10, d30 = dyield("UST_2Y"), dyield("UST_10Y"), dyield("UST_30Y")
     baa = dyield("CREDIT_BAA")
     return {
         "equity": logret("EQ_US_LARGE"),
-        "rates_level": [(a + b + c) / 3.0 for a, b, c in zip(d2, d10, d30, strict=True)],
+        "rates_level": [
+            (a + b + c) / 3.0 for a, b, c in zip(d2, d10, d30, strict=True)
+        ],
         "rates_slope": [c - a for a, c in zip(d2, d30, strict=True)],
         # Baa over the 10y Treasury: the standard corporate spread, and the
         # definition behind FRED's own BAA10Y. Defining it as Baa - Aaa instead
@@ -380,7 +378,7 @@ def main() -> int:
             # Chain daily par-bond total returns into an index starting at 100.
             assert inst.maturity_years is not None
             levels = [100.0]
-            for prev, now in zip(common[:-1], common[1:], strict=True):
+            for prev, now in itertools.pairwise(common):
                 r = par_bond_total_return(
                     obs[prev] / 100.0, obs[now] / 100.0, inst.maturity_years
                 )
@@ -405,7 +403,7 @@ def main() -> int:
     manifest = {
         "generated_by": "scripts/fetch_data.py",
         "git_commit": git_sha(),
-        "retrieved_utc": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "retrieved_utc": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
         "as_of": common[-1],
         "requested_through": end.isoformat(),
         "sample_start": common[0],
