@@ -1,4 +1,4 @@
-# risk-management-engine
+# Risk Management Engine
 
 A multi-asset portfolio risk engine in C++20: Value at Risk three ways,
 Expected Shortfall, risk attribution, stress testing, and the regulatory
